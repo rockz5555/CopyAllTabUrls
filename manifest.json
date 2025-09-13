@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Copy All URLs",
+  "version": "1.0",
+  "description": "Copy all open tab URLs to clipboard and paste URLs to open new tabs.",
+  "permissions": ["tabs", "clipboardRead", "scripting"],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
