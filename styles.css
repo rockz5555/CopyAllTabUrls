@@ -167,7 +167,6 @@ h1 {
   z-index: -2;
 }
 
-/* Inner mask to preserve frosted look */
 .toast::after {
   content: '';
   position: absolute;

@@ -1,10 +1,10 @@
 # Copy All Tab URLs
 
-A Chrome extension to copy all open tab URLs to the clipboard.
+A Chrome extension to copy/paste all open tab URLs to the clipboard.
 
 ## Features
 
-- Copies URLs of all open tabs in the current window.
+- Copies and pastes URLs of all open tabs in the current window.
 - Easy-to-use popup interface.
 
 ## Installation
