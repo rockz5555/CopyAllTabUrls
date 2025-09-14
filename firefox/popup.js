@@ -1,46 +1,67 @@
 import { showToast } from './helper.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const tabs = await browser.tabs.query({});
   const list = document.getElementById('urlList');
   const tabCountSpan = document.getElementById('tabCount');
-  const copyBtn = document.getElementById('copyBtn');
-  const pasteOpenBtn = document.getElementById('pasteOpenBtn');
 
-  try {
-    const tabs = await browser.tabs.query({});
-    const urls = tabs.map((tab) => tab.url);
+  list.innerHTML = '';
+  tabCountSpan.textContent = tabs.length;
 
-    list.innerHTML = '';
-    tabCountSpan.textContent = tabs.length;
+  tabs.forEach((el) => {
+    const tab = el;
 
-    urls.forEach((url) => {
-      const li = document.createElement('li');
-      li.textContent = url;
-      list.appendChild(li);
+    if (tab.url.startsWith('chrome://') || tab.url.startsWith('about:')) {
+      return;
+    }
+    const li = document.createElement('li');
+    const img = document.createElement('img');
+    const span = document.createElement('span');
 
-      li.addEventListener('click', () => {
-        navigator.clipboard
-          .writeText(url)
-          .then(() => showToast('URL copied to clipboard!'))
-          .catch((err) => {
-            console.error('Failed to copy: ', err);
-            showToast('Failed to copy URL');
-          });
-      });
-    });
+    img.src = `${tab.favIconUrl}`;
+    img.width = 32;
 
-    copyBtn.addEventListener('click', () => {
-      const textToCopy = urls.join('\n');
+    span.style.cssText = `
+      position: relative;
+      font-family: monospace;
+      font-size: 1.2em;
+      top: -1.6rem;
+      left: 2.8rem;
+    `;
+    span.textContent += tab.title;
+
+    li.textContent = tab.url;
+
+    list.appendChild(img);
+    list.appendChild(span);
+    list.appendChild(li);
+
+    li.addEventListener('click', () => {
       navigator.clipboard
-        .writeText(textToCopy)
-        .then(() => showToast('All URLs copied!'))
+        .writeText(tab.url)
+        .then(() => showToast('URL copied to clipboard!'))
         .catch((err) => {
           console.error('Failed to copy: ', err);
-          showToast('Failed to copy URLs');
+          showToast('Failed to copy URL');
         });
     });
+  });
 
-    pasteOpenBtn.addEventListener('click', async () => {
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const textToCopy = tabs.map(tab => tab.url).join('\n');
+
+    navigator.clipboard
+      .writeText(textToCopy)
+      .then(() => showToast('All URLs copied!'))
+      .catch((err) => {
+        console.error('Failed to copy: ', err);
+        showToast('Failed to copy URLs');
+      });
+  });
+
+  document
+    .getElementById('pasteOpenBtn')
+    .addEventListener('click', async () => {
       try {
         const pastedText = await navigator.clipboard.readText();
         const pastedUrls = pastedText
@@ -49,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           .filter((url) => url.startsWith('http'));
 
         pastedUrls.forEach((url) => {
-          browser.tabs.create({ url });
+          chrome.tabs.create({ url });
         });
 
         showToast(`${pastedUrls.length} tabs opened from clipboard`);
@@ -58,8 +79,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast('Could not read clipboard. Check permissions.');
       }
     });
-  } catch (err) {
-    console.error('Error querying tabs:', err);
-    showToast('Could not retrieve tabs.');
-  }
 });

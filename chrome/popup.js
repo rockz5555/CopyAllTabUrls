@@ -4,20 +4,40 @@ chrome.tabs.query({}, function (tabs) {
   const list = document.getElementById('urlList');
   const tabCountSpan = document.getElementById('tabCount');
 
-  const urls = tabs.map((tab) => tab.url);
-
   list.innerHTML = '';
   tabCountSpan.textContent = tabs.length;
 
-  urls.forEach((url) => {
-    const li = document.createElement('li');
+  tabs.forEach((el) => {
+    const tab = el;
 
-    li.textContent = url;
+    if (tab.url.startsWith('chrome://') || tab.url.startsWith('about:')) {
+      return;
+    }
+    const li = document.createElement('li');
+    const img = document.createElement('img');
+    const span = document.createElement('span');
+
+    img.src = `${tab.favIconUrl}`;
+    img.width = 32;
+
+    span.style.cssText = `
+      position: relative;
+      font-family: monospace;
+      font-size: 1.2em;
+      top: -1.6rem;
+      left: 2.8rem;
+    `;
+    span.textContent += tab.title;
+
+    li.textContent = tab.url;
+
+    list.appendChild(img);
+    list.appendChild(span);
     list.appendChild(li);
 
     li.addEventListener('click', () => {
       navigator.clipboard
-        .writeText(url)
+        .writeText(tab.url)
         .then(() => showToast('URL copied to clipboard!'))
         .catch((err) => {
           console.error('Failed to copy: ', err);
@@ -27,7 +47,7 @@ chrome.tabs.query({}, function (tabs) {
   });
 
   document.getElementById('copyBtn').addEventListener('click', () => {
-    const textToCopy = urls.join('\n');
+    const textToCopy = tabs.map(tab => tab.url).join('\n');
 
     navigator.clipboard
       .writeText(textToCopy)
