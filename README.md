@@ -1,4 +1,6 @@
-# 📋 Copy All Tab URLs
+# Copy All Tab URLs
+
+<img src="./icon.png" alt="Logo" width="68" />
 
 A lightweight browser extension to copy all open tab URLs to your clipboard — now compatible with **Chrome** and **Firefox**.
 
