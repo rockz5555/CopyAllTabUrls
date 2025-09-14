@@ -53,5 +53,3 @@ A lightweight browser extension to copy all open tab URLs to your clipboard — 
 MIT — feel free to use, modify, and share.
 
 ---
-
-Let me know if you'd like to add badges, screenshots, or a demo GIF to make it pop visually. I can also help you write a short pitch for the Chrome Web Store or AMO listing.
