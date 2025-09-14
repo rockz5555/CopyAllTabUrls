@@ -24,6 +24,7 @@ chrome.tabs.query({}, function (tabs) {
       position: relative;
       font-family: monospace;
       font-size: 1.2em;
+      margin-right: 2rem;
       top: -1.6rem;
       left: 2.8rem;
     `;
