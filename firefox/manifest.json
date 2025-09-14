@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "author": "rockz5555",
+  "name": "Copy All URLs",
+  "version": "1.0",
+  "description": "Copy all open tab URLs to clipboard and paste URLs to open new tabs.",
+  "incognito": "spanning",
+  "icons": {
+    "48": "icons/icon.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icons/icon.png"
+    },
+    "default_title": "Copy All URLs"
+  },
+  "host_permissions": ["<all_urls>"],
+  "permissions": ["tabs", "clipboardRead", "clipboardWrite"]
+}

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <title>Tab URLs</title>
+</head>
+
+<body>
+  <h1>Current Tabs (<span id="tabCount"></span>)</h1>
+  <ul id="urlList" class="fancy-list"></ul>
+  <div class="button-group">
+    <button id="copyBtn" type="button" class="btn btn-gradient">Copy All URLs</button>
+    <button id="pasteOpenBtn" type="button" class="btn btn-outline">Paste &amp; Open Tabs</button>
+  </div>
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="popup.js" type="module"></script>
+</body>
+
+</html>

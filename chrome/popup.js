@@ -2,9 +2,12 @@ import { showToast } from './helper.js';
 
 chrome.tabs.query({}, function (tabs) {
   const list = document.getElementById('urlList');
+  const tabCountSpan = document.getElementById('tabCount');
+
   const urls = tabs.map((tab) => tab.url);
 
   list.innerHTML = '';
+  tabCountSpan.textContent = tabs.length;
 
   urls.forEach((url) => {
     const li = document.createElement('li');
