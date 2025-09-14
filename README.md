@@ -16,7 +16,7 @@ A lightweight browser extension to copy all open tab URLs to your clipboard — 
 
 ### Chrome
 
-<img src="./chrome.svg" alt="Logo" width="200" />
+<img src="./chrome.svg" alt="Logo" width="68" />
 
 1. Download or clone this repository  
 2. Navigate to `chrome://extensions/`  
@@ -25,7 +25,7 @@ A lightweight browser extension to copy all open tab URLs to your clipboard — 
 
 ### Firefox
 
-<img src="./firefox.svg" alt="Logo" width="200" />
+<img src="./firefox.svg" alt="Logo" width="68" />
 
 1. Download or clone this repository  
 2. Navigate to `about:debugging#/runtime/this-firefox`  
