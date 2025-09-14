@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       font-size: 1.2em;
       top: -1.6rem;
       left: 2.8rem;
+      margin-right: 2rem;
     `;
     span.textContent += tab.title;
 
