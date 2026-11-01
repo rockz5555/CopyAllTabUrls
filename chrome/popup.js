@@ -13,6 +13,8 @@ const ICONS = {
   check:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
   go: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/></svg>',
+  chevron:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
 };
 
 const FORMATTERS = {
@@ -31,6 +33,7 @@ const FORMAT_LABELS = {
 const state = {
   tabs: [],
   selected: new Set(),
+  collapsed: new Set(),
   query: "",
   format: loadFormat(),
   currentWindowId: undefined,
@@ -333,16 +336,32 @@ function render() {
   });
 
   syncCounts();
+  applyCollapseToDom();
   state.firstRender = false;
 }
 
 function createWindowSeparator(windowId, tabs, windowNumber) {
   const item = document.createElement("li");
   item.className = "window-sep";
+  item.dataset.windowId = String(windowId);
+
+  const head = document.createElement("button");
+  head.type = "button";
+  head.className = "window-head";
+  head.dataset.windowId = String(windowId);
+  head.setAttribute("aria-expanded", "true");
+  head.setAttribute("aria-label", `Collapse window ${windowNumber}`);
+
+  const chevron = document.createElement("span");
+  chevron.className = "window-chevron";
+  chevron.setAttribute("aria-hidden", "true");
+  chevron.innerHTML = ICONS.chevron;
 
   const name = document.createElement("span");
   name.className = "window-name";
   name.textContent = `Window ${windowNumber}`;
+
+  head.append(chevron, name);
 
   const actions = document.createElement("span");
   actions.className = "window-actions";
@@ -360,7 +379,7 @@ function createWindowSeparator(windowId, tabs, windowNumber) {
   toggle.setAttribute("aria-label", `Select all tabs in window ${windowNumber}`);
 
   actions.append(count, toggle);
-  item.append(name, actions);
+  item.append(head, actions);
   return item;
 }
 
@@ -368,6 +387,7 @@ function createTabItem(tab, index, animate) {
   const item = document.createElement("li");
   item.className = "tab-item";
   item.dataset.tabId = tab.id;
+  item.dataset.windowId = String(tab.windowId);
   item.style.setProperty("--hue", String(hashHue(tab.url || tab.title)));
 
   if (animate) {
@@ -546,6 +566,43 @@ function updateWindowToggles() {
   });
 }
 
+function isWindowCollapsed(windowId) {
+  return !state.query.trim() && state.collapsed.has(String(windowId));
+}
+
+/* Collapse is a view concern: hidden tabs stay selected and still copy. */
+function applyCollapseToDom() {
+  const searching = Boolean(state.query.trim());
+
+  el.list.querySelectorAll(".window-sep").forEach((separator) => {
+    const windowId = separator.dataset.windowId;
+    const collapsed = isWindowCollapsed(windowId);
+    const head = separator.querySelector(".window-head");
+    const name = separator.querySelector(".window-name")?.textContent || "window";
+
+    separator.classList.toggle("is-collapsed", collapsed);
+
+    if (head) {
+      head.disabled = searching;
+      head.setAttribute("aria-expanded", String(!collapsed));
+      head.setAttribute("aria-label", `${collapsed ? "Expand" : "Collapse"} ${name}`);
+    }
+
+    el.list
+      .querySelectorAll(`.tab-item[data-window-id="${windowId}"]`)
+      .forEach((tabItem) => {
+        tabItem.hidden = collapsed;
+      });
+  });
+}
+
+function toggleWindowSection(windowId) {
+  const key = String(windowId);
+  if (state.collapsed.has(key)) state.collapsed.delete(key);
+  else state.collapsed.add(key);
+  applyCollapseToDom();
+}
+
 /* Update checkboxes in place so per-window toggles don't reset the scroll position. */
 function applySelectionToDom() {
   el.list.querySelectorAll(".tab-item").forEach((item) => {
@@ -709,6 +766,12 @@ function bindEvents() {
   });
 
   el.list.addEventListener("click", (event) => {
+    const head = event.target.closest(".window-head");
+    if (head) {
+      if (!state.query.trim()) toggleWindowSection(head.dataset.windowId);
+      return;
+    }
+
     const toggle = event.target.closest(".window-toggle");
     if (!toggle) return;
 

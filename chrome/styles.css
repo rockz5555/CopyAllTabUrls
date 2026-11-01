@@ -868,6 +868,74 @@ input {
   text-overflow: ellipsis;
 }
 
+.window-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-left: -3px;
+  padding: 3px 6px 3px 3px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  transition: color 0.18s var(--ease), background 0.18s var(--ease);
+}
+
+.window-head:hover:not(:disabled) {
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.window-head:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.window-head:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.window-head:focus-visible {
+  outline: 2px solid #ff8fa3;
+  outline-offset: 1px;
+}
+
+.window-chevron {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  color: var(--faint);
+  transition: transform 0.24s var(--ease), color 0.18s var(--ease);
+}
+
+.window-chevron svg {
+  width: 10px;
+  height: 10px;
+}
+
+.window-head:hover:not(:disabled) .window-chevron {
+  color: rgba(255, 45, 85, 0.9);
+}
+
+.window-sep.is-collapsed {
+  padding-bottom: 6px;
+}
+
+.window-sep.is-collapsed .window-chevron {
+  transform: rotate(-90deg);
+}
+
+.window-sep.is-collapsed .window-name {
+  color: var(--text-dim);
+}
+
 .window-actions {
   display: flex;
   align-items: center;

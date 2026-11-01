@@ -40,6 +40,7 @@ Copied a list of links from a chat, an email, or a document? Open the popup and 
 
 Built for real tab habits
 - Tabs are grouped by window, with the active tab marked
+- Collapse a window's tabs to focus on the rest, without losing the selection
 - Select or clear a whole window without touching the others
 - Copy a single URL from any tab without changing your selection
 - Jump straight to any tab, even in another window

@@ -17,6 +17,7 @@ URLs, titled links, or Markdown. Works on **Chrome** and **Firefox**.
 - 📋 **Copy a single URL** — hover any tab and hit its copy button
 - 📥 **Paste & open** — paste a list of links (even Markdown) and reopen them as tabs
 - 🪟 **Multi-window aware** — tabs are grouped by window, with the active tab highlighted
+- 🗂️ **Collapsible windows** — fold a window's tabs to focus on the rest without losing your selection
 - 🎨 **Redline-glass UI** — crimson neon glow, frosted glass cards, CRT haze, and buttery micro-interactions
 - ⌨️ **Keyboard friendly** — `/` to search, `Enter` to copy, `Esc` to clear/close
 - 🧩 **Graceful favicons** — letter avatars when a site has no icon
