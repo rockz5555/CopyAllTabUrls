@@ -85,6 +85,12 @@ copy `popup.html`, `styles.css`, `popup.js`, and `helper.js` into `firefox/`.
 
 ---
 
+## 👤 Author
+
+Built and maintained by **Nijoo** — [github.com/rockz5555](https://github.com/rockz5555).
+
+---
+
 ## 📄 License
 
 MIT — feel free to use, modify, and share.

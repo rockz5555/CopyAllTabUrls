@@ -96,9 +96,17 @@ Required only when the user presses Paste & open, to read links from the clipboa
 
 Privacy policy URL: none required; the extension has no server component and stores only the chosen copy format in `localStorage`.
 
+## Developer details
+
+- Developer name: `Nijoo`
+- Developer website: https://github.com/rockz5555
+- Support: https://github.com/rockz5555/CopyAllTabUrls/issues
+- In-product credit: the popup footer reads "Built by Nijoo"
+
 ## Firefox AMO fields
 
 - Name: `Copy All URLs`
+- Author: `Nijoo`
 - Category: Tabs
 - Tags: `tabs`, `clipboard`, `urls`, `markdown`, `productivity`
 - Homepage: https://github.com/rockz5555/CopyAllTabUrls

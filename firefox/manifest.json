@@ -1,6 +1,7 @@
 {
   "manifest_version": 3,
-  "author": "rockz5555",
+  "author": "Nijoo",
+  "homepage_url": "https://github.com/rockz5555/CopyAllTabUrls",
   "name": "Copy All URLs",
   "version": "1.1.0",
   "description": "Copy every open tab URL in one click — as plain links, titled links, or Markdown. Paste a list back to reopen tabs.",
