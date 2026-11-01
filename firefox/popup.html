@@ -2,20 +2,150 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="styles.css">
-  <title>Tab URLs</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Copy All URLs</title>
 </head>
 
 <body>
-  <h1>Current Tabs (<span id="tabCount"></span>)</h1>
-  <ul id="urlList" class="fancy-list"></ul>
-  <div class="button-group">
-    <button id="copyBtn" type="button" class="btn btn-gradient">Copy All URLs</button>
-    <button id="pasteOpenBtn" type="button" class="btn btn-outline">Paste &amp; Open Tabs</button>
+  <div class="aurora" aria-hidden="true">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+    <span class="grain"></span>
   </div>
-  <div id="toastContainer" class="toast-container"></div>
+
+  <main class="app">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"
+            stroke-linejoin="round">
+            <rect x="9" y="9" width="11" height="11" rx="2.5"></rect>
+            <path d="M5.5 15H4.8A2.8 2.8 0 0 1 2 12.2V4.8A2.8 2.8 0 0 1 4.8 2h7.4A2.8 2.8 0 0 1 15 4.8v.7"></path>
+          </svg>
+        </div>
+        <div class="brand-copy">
+          <h1>Copy All URLs</h1>
+          <p>Every tab. One clipboard.</p>
+        </div>
+      </div>
+      <div class="tab-badge" title="Open tabs">
+        <span class="tab-badge-dot" aria-hidden="true"></span>
+        <span id="tabCount">0</span>
+      </div>
+    </header>
+
+    <section class="toolbar">
+      <div class="search-field" id="searchField">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5"></circle>
+          <path d="m16 16 4.5 4.5"></path>
+        </svg>
+        <input id="searchInput" type="search" placeholder="Search title or URL" autocomplete="off" spellcheck="false"
+          aria-label="Search tabs" />
+        <button id="clearSearch" class="icon-btn clear-btn" type="button" aria-label="Clear search" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+            aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18"></path>
+          </svg>
+        </button>
+        <kbd class="kbd" aria-hidden="true">/</kbd>
+      </div>
+
+      <div class="format-switch" id="formatSwitch" role="radiogroup" aria-label="Copy format" style="--i: 0">
+        <span class="format-indicator" aria-hidden="true"></span>
+        <button type="button" class="format-option is-active" data-format="urls" role="radio" aria-checked="true"
+          title="One plain URL per line">
+          URLs
+        </button>
+        <button type="button" class="format-option" data-format="titled" role="radio" aria-checked="false"
+          title="Page title followed by its URL">
+          Title + URL
+        </button>
+        <button type="button" class="format-option" data-format="markdown" role="radio" aria-checked="false"
+          title="Markdown list of links">
+          Markdown
+        </button>
+      </div>
+    </section>
+
+    <div class="list-head">
+      <span id="listMeta" class="list-meta" aria-live="polite">Loading tabs&hellip;</span>
+      <button id="selectAllBtn" class="text-btn" type="button">Select all</button>
+    </div>
+
+    <ul id="urlList" class="tab-list" aria-label="Open tabs">
+      <li class="skeleton" aria-hidden="true">
+        <span class="skeleton-check"></span>
+        <span class="skeleton-favicon"></span>
+        <span class="skeleton-lines">
+          <span class="skeleton-line skeleton-line-title"></span>
+          <span class="skeleton-line skeleton-line-url"></span>
+        </span>
+      </li>
+      <li class="skeleton" aria-hidden="true">
+        <span class="skeleton-check"></span>
+        <span class="skeleton-favicon"></span>
+        <span class="skeleton-lines">
+          <span class="skeleton-line skeleton-line-title"></span>
+          <span class="skeleton-line skeleton-line-url"></span>
+        </span>
+      </li>
+      <li class="skeleton" aria-hidden="true">
+        <span class="skeleton-check"></span>
+        <span class="skeleton-favicon"></span>
+        <span class="skeleton-lines">
+          <span class="skeleton-line skeleton-line-title"></span>
+          <span class="skeleton-line skeleton-line-url"></span>
+        </span>
+      </li>
+    </ul>
+
+    <div id="emptyState" class="empty-state" hidden>
+      <div class="empty-glow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="11" cy="11" r="6.5"></circle>
+          <path d="m16 16 4.5 4.5"></path>
+          <path d="M8.5 11h5"></path>
+        </svg>
+      </div>
+      <p id="emptyTitle" class="empty-title">No tabs found</p>
+      <p id="emptyHint" class="empty-hint">Try a different search term.</p>
+    </div>
+
+    <footer class="actions">
+      <button id="copyBtn" class="btn btn-primary" type="button">
+        <span class="btn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <rect x="9" y="9" width="11" height="11" rx="2.5"></rect>
+            <path d="M5.5 15H4.8A2.8 2.8 0 0 1 2 12.2V4.8A2.8 2.8 0 0 1 4.8 2h7.4A2.8 2.8 0 0 1 15 4.8v.7"></path>
+          </svg>
+        </span>
+        <span id="copyLabel" class="btn-label">Copy URLs</span>
+        <kbd class="kbd kbd-on-primary" aria-hidden="true">&#9166;</kbd>
+      </button>
+      <button id="pasteOpenBtn" class="btn btn-ghost" type="button"
+        title="Read links from your clipboard and open them as new tabs">
+        <span class="btn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"
+            stroke-linejoin="round">
+            <rect x="8" y="2.5" width="8" height="4" rx="1.6"></rect>
+            <path d="M16 4.5h1.8A2.2 2.2 0 0 1 20 6.7v12.1a2.2 2.2 0 0 1-2.2 2.2H6.2A2.2 2.2 0 0 1 4 18.8V6.7a2.2 2.2 0 0 1 2.2-2.2H8"></path>
+            <path d="M12 11v6"></path>
+            <path d="m9.5 14.5 2.5 2.5 2.5-2.5"></path>
+          </svg>
+        </span>
+        <span class="btn-label">Paste &amp; open</span>
+      </button>
+    </footer>
+  </main>
+
+  <div id="toastContainer" class="toast-container" role="status" aria-live="polite"></div>
 
   <script src="popup.js" type="module"></script>
 </body>

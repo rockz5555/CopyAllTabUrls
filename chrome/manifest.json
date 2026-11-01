@@ -2,15 +2,16 @@
   "manifest_version": 3,
   "author": "rockz5555",
   "name": "Copy All URLs",
-  "version": "1.0",
-  "description": "Copy all open tab URLs to clipboard and paste URLs to open new tabs.",
-  "permissions": ["tabs", "clipboardRead", "scripting"],
+  "version": "1.1.0",
+  "description": "Copy every open tab URL in one click — as plain links, titled links, or Markdown. Paste a list back to reopen tabs.",
+  "permissions": ["tabs", "clipboardRead", "clipboardWrite"],
   "icons": {
-      "16": "icons/icon_small.png",
-      "48": "icons/icon_medium.png",
-      "128": "icons/icon_large.png"
-   },
+    "16": "icons/icon_small.png",
+    "48": "icons/icon_medium.png",
+    "128": "icons/icon_large.png"
+  },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_title": "Copy All URLs"
   }
 }

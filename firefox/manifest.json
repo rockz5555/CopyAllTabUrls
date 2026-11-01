@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "author": "rockz5555",
   "name": "Copy All URLs",
-  "version": "1.0.1",
-  "description": "Copy all open tab URLs to clipboard and paste URLs to open new tabs.",
+  "version": "1.1.0",
+  "description": "Copy every open tab URL in one click — as plain links, titled links, or Markdown. Paste a list back to reopen tabs.",
   "incognito": "spanning",
   "icons": {
     "48": "icons/icon.png"
@@ -15,7 +15,6 @@
     },
     "default_title": "Copy All URLs"
   },
-  "host_permissions": ["<all_urls>"],
   "permissions": ["tabs", "clipboardRead", "clipboardWrite"],
   "browser_specific_settings": {
     "gecko": {

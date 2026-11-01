@@ -2,7 +2,7 @@ import { signAddon } from 'sign-addon';
 
 signAddon({
   xpiPath: './firefox.zip',
-  version: '1.0.1',
+  version: '1.1.0',
   apiKey: 'user:5871784:211',
   apiSecret: '148779b2f672f2be7a180a4fe2c02956afac100117b9fcfcd496b8f4f7390211',
   id: 'info@nizwer.top', // must match manifest
