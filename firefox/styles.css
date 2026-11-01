@@ -588,6 +588,7 @@ input {
   position: relative;
   display: flex;
   align-items: center;
+  gap: 2px;
   flex: 0 0 auto;
   padding-right: 5px;
   border: 1px solid rgba(255, 150, 165, 0.1);
@@ -786,6 +787,37 @@ input {
   opacity: 1;
   color: var(--green);
   background: rgba(45, 255, 179, 0.14);
+}
+
+.tab-go {
+  opacity: 0.42;
+  transition:
+    color 0.18s var(--ease),
+    background 0.18s var(--ease),
+    box-shadow 0.22s var(--ease),
+    transform 0.16s var(--ease-spring);
+}
+
+.tab-item:hover .tab-go,
+.tab-go:focus-visible {
+  opacity: 1;
+}
+
+.tab-go:hover {
+  color: #fff;
+  background: linear-gradient(140deg, rgba(255, 154, 107, 0.92), rgba(255, 45, 85, 0.92) 55%, rgba(255, 0, 128, 0.9));
+  box-shadow:
+    0 5px 14px -5px rgba(255, 45, 85, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.tab-go:active {
+  transform: scale(0.9);
+}
+
+.tab-go:focus-visible {
+  outline: 2px solid #ff8fa3;
+  outline-offset: 1px;
 }
 
 .tab-item.enter {
@@ -1031,10 +1063,18 @@ input {
 .btn-primary {
   flex: 1 1 auto;
   color: #fff;
-  background: linear-gradient(115deg, #ff9a5c 0%, #ff2d55 48%, #ff0080 100%);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.30), rgba(255, 255, 255, 0) 46%),
+    linear-gradient(115deg, rgba(255, 154, 92, 0.92) 0%, rgba(255, 45, 85, 0.94) 48%, rgba(255, 0, 128, 0.92) 100%);
+  border-color: rgba(255, 176, 190, 0.42);
   box-shadow:
-    0 12px 26px -12px rgba(255, 45, 85, 0.9),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    0 14px 30px -14px rgba(255, 45, 85, 0.95),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -12px 20px -14px rgba(120, 0, 40, 0.9);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  text-shadow: 0 1px 2px rgba(80, 0, 24, 0.45);
 }
 
 .btn-primary::before {
@@ -1044,16 +1084,23 @@ input {
   left: -70%;
   width: 45%;
   height: 100%;
-  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.5), transparent);
   transform: skewX(-18deg);
   transition: left 0.55s var(--ease);
   pointer-events: none;
+  z-index: 1;
 }
 
 .btn-primary:hover:not(:disabled) {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0) 48%),
+    linear-gradient(115deg, rgba(255, 168, 112, 0.96) 0%, rgba(255, 61, 100, 0.97) 48%, rgba(255, 26, 140, 0.96) 100%);
+  border-color: rgba(255, 205, 214, 0.6);
   box-shadow:
-    0 16px 34px -12px rgba(255, 45, 85, 1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+    0 18px 38px -14px rgba(255, 45, 85, 1),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -12px 20px -14px rgba(120, 0, 40, 0.9);
 }
 
 .btn-primary:hover:not(:disabled)::before {
@@ -1068,10 +1115,15 @@ input {
 }
 
 .btn-primary.is-success {
-  background: linear-gradient(115deg, #0bd68f, #2dffb3);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 46%),
+    linear-gradient(115deg, rgba(11, 214, 143, 0.9), rgba(45, 255, 179, 0.88));
+  border-color: rgba(160, 255, 219, 0.55);
   box-shadow:
-    0 12px 26px -12px rgba(45, 255, 179, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    0 14px 30px -14px rgba(45, 255, 179, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.46),
+    inset 0 -12px 20px -14px rgba(0, 92, 60, 0.75);
+  text-shadow: 0 1px 2px rgba(0, 74, 48, 0.45);
   animation: success-pop 0.42s var(--ease-spring);
 }
 
@@ -1084,22 +1136,28 @@ input {
 .btn-ghost {
   flex: 0 0 auto;
   color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 150, 165, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.02) 52%),
+    rgba(255, 45, 85, 0.05);
+  border-color: rgba(255, 150, 165, 0.18);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -10px 16px -14px rgba(255, 45, 85, 0.7),
     0 0 20px -12px rgba(255, 45, 85, 0.8);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
 }
 
 .btn-ghost:hover:not(:disabled) {
   color: var(--text);
-  border-color: rgba(255, 45, 85, 0.5);
-  background: rgba(255, 45, 85, 0.14);
+  border-color: rgba(255, 45, 85, 0.52);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03) 52%),
+    rgba(255, 45, 85, 0.16);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 26px -10px rgba(255, 45, 85, 1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -10px 16px -14px rgba(255, 45, 85, 0.9),
+    0 0 28px -10px rgba(255, 45, 85, 1);
 }
 
 .btn-ghost:disabled {

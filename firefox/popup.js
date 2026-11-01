@@ -12,6 +12,7 @@ const ICONS = {
   copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5.5 15H4.8A2.8 2.8 0 0 1 2 12.2V4.8A2.8 2.8 0 0 1 4.8 2h7.4A2.8 2.8 0 0 1 15 4.8v.7"/></svg>',
   check:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  go: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/></svg>',
 };
 
 const FORMATTERS = {
@@ -128,6 +129,7 @@ function normalizeTab(tab) {
 
   return {
     id: String(tab.id ?? `${tab.windowId}:${tab.index}`),
+    nativeId: tab.id,
     url,
     title,
     favIconUrl: tab.favIconUrl || "",
@@ -182,6 +184,56 @@ function createTab(url) {
       resolve(false);
     }
   });
+}
+
+function activateTab(tab) {
+  return new Promise((resolve, reject) => {
+    try {
+      const result = api.tabs.update(tab.nativeId, { active: true });
+      if (result && typeof result.then === "function") {
+        result.then(() => resolve(), reject);
+      } else {
+        resolve();
+      }
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+function focusWindow(windowId) {
+  if (!api.windows || typeof api.windows.update !== "function") {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    try {
+      const result = api.windows.update(windowId, { focused: true });
+      if (result && typeof result.then === "function") {
+        result.then(() => resolve(), () => resolve());
+      } else {
+        resolve();
+      }
+    } catch {
+      resolve();
+    }
+  });
+}
+
+async function goToTab(tab) {
+  try {
+    await activateTab(tab);
+  } catch {
+    showToast("Could not switch to that tab", { type: "error" });
+    return;
+  }
+
+  await focusWindow(tab.windowId);
+
+  try {
+    window.close();
+  } catch {
+    /* popups can refuse to close; the tab is already focused either way */
+  }
 }
 
 async function copyText(text) {
@@ -373,7 +425,9 @@ function createTabItem(tab, index, animate) {
   text.append(title, url);
   row.append(check, favicon, text);
 
-  if (tab.active && tab.windowId === state.currentWindowId) {
+  const isCurrentTab = tab.active && tab.windowId === state.currentWindowId;
+
+  if (isCurrentTab) {
     const tag = document.createElement("span");
     tag.className = "tab-tag";
     tag.textContent = "Active";
@@ -415,6 +469,25 @@ function createTabItem(tab, index, animate) {
   });
 
   item.append(row, copyBtn);
+
+  /* The tab the popup is already attached to needs no jump button. */
+  if (!isCurrentTab) {
+    const goBtn = document.createElement("button");
+    goBtn.type = "button";
+    goBtn.className = "icon-btn tab-go";
+    goBtn.title = "Go to this tab";
+    goBtn.setAttribute("aria-label", `Go to “${tab.title}”`);
+    goBtn.innerHTML = ICONS.go;
+
+    goBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      goToTab(tab);
+    });
+
+    item.append(goBtn);
+  }
+
   return item;
 }
 
