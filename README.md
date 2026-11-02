@@ -1,6 +1,6 @@
-# Copy All Tab URLs
+<h1 align="center">Copy All Tab URLs</h1>
 
-<img src="./icon.png?raw=true" alt="Logo" width="256" />
+<p align="center"><img src="./icon.png?raw=true" alt="Logo" width="256" /></p>
 
 A polished browser extension that puts every open tab on your clipboard in one click — as plain
 URLs, titled links, or Markdown. Works on **Chrome** and **Firefox**.
