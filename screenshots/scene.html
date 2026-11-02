@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en" data-view="scene">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Copy All URLs — store artwork</title>
+  <script>
+    (() => {
+      const query = new URLSearchParams(location.search);
+      const root = document.documentElement;
+      root.dataset.view = query.get("view") || "scene";
+      const blur = query.get("blur") === "1" ? "1" : "0";
+      const scenario = query.get("scenario") || "single";
+      root.dataset.blur = blur;
+
+      window.addEventListener("DOMContentLoaded", () => {
+        const frame = document.getElementById("popup");
+
+        const publishMetrics = () => {
+          const rect = (node) => {
+            if (!node) return null;
+            const box = node.getBoundingClientRect();
+            return [box.top, box.bottom, box.left, box.right].map((n) => Math.round(n));
+          };
+          const doc = frame.contentDocument;
+          document.title = JSON.stringify({
+            view: root.dataset.view,
+            popupHeight: frame.getBoundingClientRect().height,
+            shell: rect(document.querySelector(".popup-shell")),
+            copy: rect(document.querySelector(".copy")),
+            notes: rect(document.querySelector(".notes")),
+            inner: [0, innerHeight, 0, innerWidth].map((n) => Math.round(n)),
+            iframeScroll: doc ? doc.documentElement.scrollHeight : null,
+            iframeClient: doc ? doc.documentElement.clientHeight : null,
+            list: doc
+              ? {
+                  scroll: doc.querySelector("#urlList")?.scrollHeight,
+                  client: doc.querySelector("#urlList")?.clientHeight,
+                  box: rect(doc.querySelector("#urlList")),
+                }
+              : null,
+            windowHeads: doc
+              ? [...doc.querySelectorAll(".window-head")].map((head) => {
+                  const box = head.getBoundingClientRect();
+                  return {
+                    window: head.dataset.windowId,
+                    top: Math.round(box.top),
+                    bottom: Math.round(box.bottom),
+                  };
+                })
+              : null,
+            favicons: doc
+              ? {
+                  total: doc.querySelectorAll(".favicon img").length,
+                  loaded: [...doc.querySelectorAll(".favicon img")].filter((img) => img.complete && img.naturalWidth > 0).length,
+                }
+              : null,
+            fonts: [...document.fonts].filter((f) => f.status === "loaded").map((f) => f.family),
+          });
+        };
+
+        frame.src = `../chrome/__shot.html?blur=${blur}&scenario=${scenario}`;
+        window.addEventListener("message", (event) => {
+          if (!event.data) return;
+          if (event.data.type === "cau:size" && event.data.height) {
+            const height = event.data.height;
+            frame.style.height = `${height}px`;
+            root.style.setProperty("--popup-h", `${height}px`);
+            root.style.setProperty("--scene-scale", Math.min(1.08, 665 / height).toFixed(3));
+            root.style.setProperty("--detail-scale", Math.min(1.15, 680 / height).toFixed(3));
+            root.style.setProperty("--formats-scale", Math.min(1.12, 680 / height).toFixed(3));
+            root.style.setProperty("--multi-scale", Math.min(1.25, 700 / height).toFixed(3));
+            root.style.setProperty("--hero-scale", Math.min(1.2, 700 / height).toFixed(3));
+            requestAnimationFrame(publishMetrics);
+          }
+          if (event.data.type === "cau:ready") {
+            document.fonts.ready.then(() => {
+              requestAnimationFrame(() => {
+                root.dataset.ready = "1";
+                requestAnimationFrame(publishMetrics);
+                setTimeout(publishMetrics, 1000);
+              });
+            });
+          }
+        });
+      });
+    })();
+  </script>
+  <style>
+    @font-face {
+      font-family: "Anton";
+      font-style: normal;
+      font-weight: 400;
+      font-display: block;
+      src: url("../chrome/fonts/anton-400.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "Manrope";
+      font-style: normal;
+      font-weight: 400 800;
+      font-display: block;
+      src: url("../chrome/fonts/manrope-var.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "JetBrains Mono";
+      font-style: normal;
+      font-weight: 400 600;
+      font-display: block;
+      src: url("../chrome/fonts/jetbrains-mono-var.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "Instrument Serif";
+      font-style: italic;
+      font-weight: 400;
+      font-display: block;
+      src: url("../chrome/fonts/instrument-serif-400-italic.woff2") format("woff2");
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 1280px;
+      height: 800px;
+      margin: 0;
+      overflow: hidden;
+      background: #070708;
+      color: #f4f1ea;
+      font-family: "Manrope", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    .stage {
+      position: relative;
+      width: 1280px;
+      height: 800px;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(760px 520px at 82% 4%, rgba(255, 92, 53, 0.26), transparent 62%),
+        radial-gradient(620px 480px at 6% 6%, rgba(217, 178, 122, 0.1), transparent 62%),
+        radial-gradient(900px 720px at 74% 104%, rgba(201, 65, 31, 0.2), transparent 64%),
+        radial-gradient(760px 520px at 18% 92%, rgba(255, 122, 87, 0.08), transparent 60%),
+        linear-gradient(168deg, #0b0b0d 0%, #070708 46%, #050506 100%);
+    }
+
+    .grid {
+      position: absolute;
+      inset: -1px;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+      background-size: 64px 64px;
+      -webkit-mask-image: radial-gradient(900px 640px at 62% 38%, #000 0%, transparent 78%);
+      mask-image: radial-gradient(900px 640px at 62% 38%, #000 0%, transparent 78%);
+      opacity: 0.75;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(64px);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .orb-1 {
+      width: 420px; height: 420px; right: 90px; top: -160px;
+      background: radial-gradient(circle at 38% 38%, rgba(255, 122, 87, 0.55), rgba(201, 65, 31, 0.08) 66%, transparent 72%);
+    }
+    .orb-2 {
+      width: 360px; height: 360px; left: -130px; bottom: -120px;
+      background: radial-gradient(circle at 50% 50%, rgba(217, 178, 122, 0.34), transparent 68%);
+    }
+    .orb-3 {
+      width: 300px; height: 300px; left: 42%; bottom: -170px;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 92, 53, 0.34), transparent 68%);
+      opacity: 0.55;
+    }
+
+    .grain {
+      position: absolute;
+      inset: -40px;
+      opacity: 0.05;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(120% 100% at 50% 44%, transparent 52%, rgba(0, 0, 0, 0.55) 100%);
+      pointer-events: none;
+    }
+
+    /* ------------------------------------------------------------ top bar */
+
+    .topbar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 92px;
+      padding: 0 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 5;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mark {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 36px; height: 36px;
+      border-radius: 11px;
+      color: #fff;
+      background: linear-gradient(140deg, #ff9a6b 0%, #ff5c35 48%, #c9411f 100%);
+      box-shadow: 0 12px 26px -12px rgba(255, 92, 53, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    }
+    .mark svg { width: 18px; height: 18px; }
+
+    .brand-name {
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: -0.015em;
+    }
+    .brand-name b { color: #ff7a57; font-weight: 800; }
+
+    .brand-ver {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.14em;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: rgba(244, 241, 234, 0.6);
+    }
+
+    .topmeta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      color: rgba(244, 241, 234, 0.55);
+      text-transform: uppercase;
+    }
+    .led {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #ff5c35;
+      box-shadow: 0 0 10px 2px rgba(255, 92, 53, 0.6);
+    }
+    .topmeta .sep {
+      width: 1px; height: 12px;
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    /* --------------------------------------------------------------- grid */
+
+    .stage-inner {
+      position: absolute;
+      top: 92px; left: 0; right: 0; bottom: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 512px) minmax(0, 1fr);
+      gap: 18px;
+      padding: 6px 64px 54px;
+      align-items: center;
+      z-index: 4;
+    }
+
+    /* --------------------------------------------------------------- copy */
+
+    .copy { max-width: 500px; }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 20px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10.5px;
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: #ff7a57;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 26px; height: 1px;
+      background: linear-gradient(90deg, #ff5c35, rgba(255, 92, 53, 0));
+    }
+
+    h1 {
+      margin: 0;
+      font-weight: 400;
+    }
+    .poster {
+      display: block;
+      font-family: "Anton", "Arial Narrow", Impact, sans-serif;
+      font-size: 88px;
+      line-height: 0.9;
+      letter-spacing: -0.012em;
+      text-transform: uppercase;
+      color: #f7f3ec;
+      text-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
+    }
+    .serif {
+      display: block;
+      margin-top: 6px;
+      font-family: "Instrument Serif", Georgia, serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: 78px;
+      line-height: 0.98;
+      letter-spacing: -0.01em;
+      background: linear-gradient(96deg, #ffe1d2 0%, #ffb494 26%, #ff7a57 56%, #d24c26 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 16px 40px rgba(255, 92, 53, 0.28));
+    }
+
+    .lede {
+      max-width: 440px;
+      margin: 26px 0 28px;
+      font-size: 15px;
+      line-height: 1.62;
+      color: rgba(244, 241, 234, 0.72);
+      letter-spacing: -0.006em;
+    }
+    .lede b {
+      color: #f4f1ea;
+      font-weight: 700;
+    }
+
+    .feats {
+      display: grid;
+      gap: 11px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .feats li {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 13.5px;
+      color: rgba(244, 241, 234, 0.82);
+    }
+    .feats .tick {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 19px; height: 19px;
+      border-radius: 6px;
+      color: #ffd9c9;
+      background: linear-gradient(150deg, rgba(255, 122, 87, 0.32), rgba(255, 92, 53, 0.08));
+      border: 1px solid rgba(255, 122, 87, 0.34);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    .feats .tick svg { width: 11px; height: 11px; }
+
+    .formats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 28px;
+    }
+    .chip {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(244, 241, 234, 0.62);
+    }
+    .chip.is-hot {
+      border-color: rgba(255, 122, 87, 0.5);
+      color: #ffb59d;
+      background: linear-gradient(140deg, rgba(255, 92, 53, 0.2), rgba(255, 92, 53, 0.04));
+      box-shadow: 0 0 24px -8px rgba(255, 92, 53, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    }
+
+    .repo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 34px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.04em;
+      color: rgba(244, 241, 234, 0.42);
+    }
+    .repo svg { width: 13px; height: 13px; opacity: 0.7; }
+    .repo .slash { color: rgba(255, 122, 87, 0.7); }
+
+    /* ------------------------------------------------------------- visual */
+
+    .visual {
+      position: relative;
+      height: 100%;
+      min-width: 0;
+    }
+
+    .popup-glow {
+      position: absolute;
+      left: -30px;
+      top: 6%;
+      width: 620px;
+      height: 88%;
+      background: radial-gradient(closest-side, rgba(255, 92, 53, 0.34), rgba(255, 92, 53, 0.08) 58%, transparent 74%);
+      filter: blur(34px);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .popup-shell {
+      position: absolute;
+      left: 46px;
+      top: 50%;
+      width: 420px;
+      z-index: 4;
+      border-radius: 23px;
+      transform: translateY(-50%) rotate(-0.7deg) scale(var(--scene-scale, 1));
+      box-shadow:
+        0 70px 140px -46px rgba(0, 0, 0, 0.95),
+        0 24px 60px -30px rgba(0, 0, 0, 0.85),
+        0 0 0 1px rgba(255, 255, 255, 0.12),
+        0 0 90px -30px rgba(255, 92, 53, 0.5);
+      background: #0a0a0b;
+    }
+
+    #popup {
+      width: 420px;
+      height: 700px;
+      display: block;
+      border: 0;
+      border-radius: 23px;
+      background: #0a0a0b;
+      overflow: hidden;
+    }
+
+    /* fake browser behind */
+
+    .browser {
+      position: absolute;
+      right: -58px;
+      top: 4%;
+      width: 618px;
+      height: 560px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: linear-gradient(162deg, rgba(24, 24, 28, 0.94), rgba(9, 9, 11, 0.97));
+      box-shadow: 0 60px 130px -46px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+      transform: rotate(-1.1deg);
+      z-index: 2;
+      opacity: 0.92;
+    }
+
+    .browser-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      height: 46px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.022);
+    }
+    .dots { display: flex; gap: 7px; }
+    .dots i {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      opacity: 0.82;
+    }
+    .dots i:nth-child(1) { background: #ff5f57; }
+    .dots i:nth-child(2) { background: #febc2e; }
+    .dots i:nth-child(3) { background: #28c840; }
+
+    .addr {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 27px;
+      padding: 0 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+      border: 1px solid rgba(255, 255, 255, 0.055);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: rgba(244, 241, 234, 0.45);
+      filter: blur(2.2px);
+    }
+    .addr .lock { width: 9px; height: 9px; border-radius: 2px; background: rgba(255, 255, 255, 0.28); }
+
+    .tabstrip {
+      display: flex;
+      gap: 6px;
+      padding: 7px 12px 0;
+      height: 41px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .ftab {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 12px;
+      height: 28px;
+      border-radius: 8px 8px 0 0;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 0;
+    }
+    .ftab.is-on { background: rgba(255, 92, 53, 0.14); border-color: rgba(255, 122, 87, 0.26); }
+    .ftab .fav {
+      width: 10px; height: 10px;
+      border-radius: 3px;
+      background: linear-gradient(140deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.18));
+    }
+    .ftab .t {
+      width: 72px;
+      height: 7px;
+      border-radius: 3px;
+      background: rgba(244, 241, 234, 0.4);
+      filter: blur(3px);
+    }
+    .ftab:nth-child(2) .t { width: 54px; }
+    .ftab:nth-child(3) .t { width: 84px; }
+    .ftab:nth-child(4) .t { width: 62px; }
+    .ftab:nth-child(5) .t { width: 48px; }
+
+    .bcontent {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 16px;
+      padding: 24px 24px 0;
+      opacity: 0.5;
+    }
+    .bcontent .panel {
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012));
+      padding: 16px;
+    }
+    .bcontent .hero-panel { grid-row: span 2; min-height: 210px; }
+    .bcontent .line {
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(244, 241, 234, 0.28);
+      filter: blur(2.4px);
+      margin-bottom: 10px;
+    }
+    .bcontent .line.w1 { width: 74%; }
+    .bcontent .line.w2 { width: 52%; background: rgba(255, 122, 87, 0.5); }
+    .bcontent .line.w3 { width: 88%; background: rgba(244, 241, 234, 0.16); }
+    .bcontent .block {
+      height: 88px;
+      border-radius: 10px;
+      background: linear-gradient(150deg, rgba(255, 122, 87, 0.2), rgba(255, 92, 53, 0.04));
+      border: 1px solid rgba(255, 122, 87, 0.12);
+    }
+
+    /* ------------------------------------------------------------ formats */
+
+    .formats-panel {
+      display: none;
+      align-self: center;
+      max-width: 470px;
+    }
+    .formats-panel .eyebrow { margin-bottom: 20px; }
+    .fmt-stack { display: grid; gap: 12px; }
+
+    .fmt-card {
+      padding: 15px 18px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.014));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .fmt-card.is-hot {
+      border-color: rgba(255, 122, 87, 0.42);
+      background: linear-gradient(158deg, rgba(255, 92, 53, 0.16), rgba(255, 92, 53, 0.025));
+      box-shadow:
+        0 24px 60px -34px rgba(255, 92, 53, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    }
+    .fmt-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(244, 241, 234, 0.44);
+    }
+    .fmt-head .fmt-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: rgba(244, 241, 234, 0.3);
+    }
+    .fmt-card.is-hot .fmt-head { color: #ffb59d; }
+    .fmt-card.is-hot .fmt-dot { background: #ff5c35; box-shadow: 0 0 9px 1px rgba(255, 92, 53, 0.7); }
+    .fmt-head .fmt-hint { margin-left: auto; color: rgba(244, 241, 234, 0.26); letter-spacing: 0.08em; }
+
+    .fmt-code {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      line-height: 1.85;
+      color: rgba(244, 241, 234, 0.58);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .fmt-code .host { color: #ffb59d; }
+    .fmt-code .dim { color: rgba(244, 241, 234, 0.34); }
+    .fmt-card:not(.is-hot) .fmt-code { color: rgba(244, 241, 234, 0.42); }
+    .fmt-card:not(.is-hot) .fmt-code .host { color: rgba(255, 181, 157, 0.72); }
+
+    /* -------------------------------------------------------------- notes */
+
+    .notes {
+      display: none;
+      align-self: center;
+      max-width: 430px;
+      padding-left: 6px;
+    }
+    .notes .eyebrow { margin-bottom: 22px; }
+    .notes-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.09);
+    }
+    .notes-list li {
+      display: flex;
+      gap: 18px;
+      padding: 20px 2px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    }
+    .notes-list .num {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: #ff7a57;
+      padding-top: 3px;
+    }
+    .notes-list h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .notes-list p {
+      margin: 0;
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: rgba(244, 241, 234, 0.58);
+    }
+    .notes-foot {
+      margin-top: 24px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(244, 241, 234, 0.34);
+    }
+
+    /* -------------------------------------------------------- detail view */
+
+    html[data-view="detail"] .copy,
+    html[data-view="detail"] .browser,
+    html[data-view="detail"] .repo { display: none; }
+
+    html[data-view="detail"] .stage-inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 470px);
+      gap: 40px;
+      padding: 4px 72px 58px;
+    }
+
+    html[data-view="detail"] .notes { display: block; }
+
+    html[data-view="detail"] .popup-glow {
+      left: 30px;
+      top: 4%;
+      width: 680px;
+      height: 92%;
+    }
+
+    html[data-view="detail"] .popup-shell {
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) rotate(-0.6deg) scale(var(--detail-scale, 1.15));
+      transform-origin: center center;
+    }
+
+    /* ---------------------------------------------------------- multi view */
+
+    .copy-multi { display: none; }
+    .copy-multi .poster { font-size: 82px; }
+
+    html[data-view="multi"] .copy-scene { display: none; }
+    html[data-view="multi"] .copy-multi { display: block; }
+
+    html[data-view="multi"] .browser { display: none; }
+
+    html[data-view="multi"] .popup-shell {
+      left: 62px;
+      transform: translateY(-50%) rotate(-0.7deg) scale(var(--multi-scale, 1.15));
+    }
+
+    html[data-view="multi"] .popup-glow {
+      left: -6px;
+      top: 6%;
+      width: 640px;
+      height: 88%;
+    }
+
+    /* -------------------------------------------------------- formats view */
+
+    html[data-view="formats"] .copy,
+    html[data-view="formats"] .browser,
+    html[data-view="formats"] .notes,
+    html[data-view="formats"] .repo { display: none; }
+
+    html[data-view="formats"] .stage-inner {
+      grid-template-columns: minmax(0, 1fr) 470px;
+      gap: 44px;
+      padding: 4px 72px 58px;
+    }
+
+    html[data-view="formats"] .formats-panel { display: block; }
+
+    html[data-view="formats"] .popup-glow {
+      left: 30px;
+      top: 4%;
+      width: 680px;
+      height: 92%;
+    }
+
+    html[data-view="formats"] .popup-shell {
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) rotate(-0.6deg) scale(var(--formats-scale, 1.08));
+      transform-origin: center center;
+    }
+
+    /* ---------------------------------------------------------- hero view */
+
+    html[data-view="hero"] .copy,
+    html[data-view="hero"] .browser,
+    html[data-view="hero"] .notes { display: none; }
+
+    html[data-view="hero"] .stage-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 0 30px;
+    }
+
+    html[data-view="hero"] .visual {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    html[data-view="hero"] .popup-shell {
+      position: relative;
+      left: auto;
+      top: auto;
+      transform: rotate(-0.6deg) scale(var(--hero-scale, 1.3));
+      transform-origin: center center;
+    }
+
+    html[data-view="hero"] .popup-glow {
+      left: 50%;
+      top: 50%;
+      width: 900px;
+      height: 900px;
+      transform: translate(-50%, -50%);
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="bg"></div>
+    <div class="grid"></div>
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+    <div class="grain"></div>
+    <div class="vignette"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="11" height="11" rx="2.5"></rect>
+            <path d="M5.5 15H4.8A2.8 2.8 0 0 1 2 12.2V4.8A2.8 2.8 0 0 1 4.8 2h7.4A2.8 2.8 0 0 1 15 4.8v.7"></path>
+          </svg>
+        </span>
+        <span class="brand-name">Copy All <b>URLs</b></span>
+        <span class="brand-ver">v1.1</span>
+      </div>
+      <div class="topmeta">
+        <span class="led"></span>
+        <span>Chrome &middot; Firefox</span>
+        <span class="sep"></span>
+        <span>Local only</span>
+      </div>
+    </header>
+
+    <div class="stage-inner">
+      <section class="copy">
+        <div class="copy-scene">
+        <p class="eyebrow">One click &middot; every tab</p>
+        <h1>
+          <span class="poster">Every tab.</span>
+          <span class="serif">one clipboard.</span>
+        </h1>
+        <p class="lede">
+          Turn a window full of tabs into a clean list you can paste anywhere &mdash;
+          <b>plain URLs</b>, <b>titled links</b>, or <b>Markdown</b>.
+        </p>
+        <ul class="feats">
+          <li>
+            <span class="tick" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </span>
+            Select tabs per window, or clear and start over in a click
+          </li>
+          <li>
+            <span class="tick" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </span>
+            Paste a list of links back to reopen them as tabs
+          </li>
+          <li>
+            <span class="tick" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </span>
+            Search, jump, and copy without leaving your keyboard
+          </li>
+        </ul>
+        <div class="formats">
+          <span class="chip is-hot">URLs</span>
+          <span class="chip">Title + URL</span>
+          <span class="chip">Markdown</span>
+          <span class="chip">No tracking</span>
+        </div>
+        <div class="repo">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+          <span>github.com<span class="slash">/</span>rockz5555<span class="slash">/</span>CopyAllTabUrls</span>
+        </div>
+        </div>
+
+        <div class="copy-multi">
+          <p class="eyebrow">Multi-window aware</p>
+          <h1>
+            <span class="poster">Two windows.</span>
+            <span class="serif">one list.</span>
+          </h1>
+          <p class="lede">
+            Tabs are grouped by window, so you always know where each one lives.
+            <b>Collapse a window</b> to focus on the rest &mdash; your selection stays exactly where it was.
+          </p>
+          <ul class="feats">
+            <li>
+              <span class="tick" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              Collapse or expand each window independently
+            </li>
+            <li>
+              <span class="tick" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              Select all or clear a whole window in one click
+            </li>
+            <li>
+              <span class="tick" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              The active tab stays marked, even across windows
+            </li>
+          </ul>
+          <div class="formats">
+            <span class="chip is-hot">Window 1</span>
+            <span class="chip">Window 2 &middot; collapsed</span>
+            <span class="chip">Active tab</span>
+            <span class="chip">No tracking</span>
+          </div>
+          <div class="repo">
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
+            <span>github.com<span class="slash">/</span>rockz5555<span class="slash">/</span>CopyAllTabUrls</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="visual">
+        <div class="browser" aria-hidden="true">
+          <div class="browser-bar">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <span class="addr"><span class="lock"></span>github.com/rockz5555/CopyAllTabUrls</span>
+          </div>
+          <div class="tabstrip">
+            <span class="ftab is-on"><i class="fav"></i><i class="t"></i></span>
+            <span class="ftab"><i class="fav"></i><i class="t"></i></span>
+            <span class="ftab"><i class="fav"></i><i class="t"></i></span>
+            <span class="ftab"><i class="fav"></i><i class="t"></i></span>
+            <span class="ftab"><i class="fav"></i><i class="t"></i></span>
+          </div>
+          <div class="bcontent">
+            <div class="panel hero-panel">
+              <div class="line w1"></div>
+              <div class="line w3"></div>
+              <div class="line w2"></div>
+              <div class="block"></div>
+            </div>
+            <div class="panel">
+              <div class="line w1"></div>
+              <div class="line w3"></div>
+              <div class="line w2"></div>
+            </div>
+            <div class="panel">
+              <div class="line w2"></div>
+              <div class="line w3"></div>
+              <div class="line w1"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="popup-glow" aria-hidden="true"></div>
+
+        <div class="popup-shell">
+          <iframe id="popup" title="Copy All URLs popup preview"></iframe>
+        </div>
+      </section>
+
+      <aside class="notes">
+        <p class="eyebrow">Inside the popup</p>
+        <ol class="notes-list">
+          <li>
+            <span class="num">01</span>
+            <div>
+              <h3>Three copy formats</h3>
+              <p>Plain URLs, Title + URL, or Markdown. Switch with a click or the arrow keys.</p>
+            </div>
+          </li>
+          <li>
+            <span class="num">02</span>
+            <div>
+              <h3>Pick exactly what you copy</h3>
+              <p>Checkboxes, per-window select all, search, and a live count of what lands on your clipboard.</p>
+            </div>
+          </li>
+          <li>
+            <span class="num">03</span>
+            <div>
+              <h3>Paste &amp; open</h3>
+              <p>Drop a list of links back in and reopen them as background tabs &mdash; up to 20 at a time.</p>
+            </div>
+          </li>
+          <li>
+            <span class="num">04</span>
+            <div>
+              <h3>Private by design</h3>
+              <p>No accounts, no analytics, no remote code. Your tabs never leave the browser.</p>
+            </div>
+          </li>
+        </ol>
+        <p class="notes-foot">Built for tab hoarders</p>
+      </aside>
+
+      <aside class="formats-panel">
+        <p class="eyebrow">Three copy formats</p>
+        <div class="fmt-stack">
+          <div class="fmt-card is-hot">
+            <div class="fmt-head"><span class="fmt-dot"></span>URLs<span class="fmt-hint">selected</span></div>
+            <div class="fmt-code"><span class="host">github.com</span>/rockz5555/CopyAllTabUrls</div>
+            <div class="fmt-code"><span class="host">figma.com</span>/community/file/12890455</div>
+            <div class="fmt-code"><span class="host">notion.so</span>/launch-checklist-8f2c1a</div>
+          </div>
+          <div class="fmt-card">
+            <div class="fmt-head"><span class="fmt-dot"></span>Title + URL</div>
+            <div class="fmt-code">Copy All URLs <span class="dim">&mdash;</span> <span class="host">github.com</span>/rockz5555/CopyAllTabUrls</div>
+            <div class="fmt-code">chrome.tabs <span class="dim">&mdash;</span> <span class="host">developer.mozilla.org</span>/en-US/docs/<span class="dim">&hellip;</span></div>
+            <div class="fmt-code">Launch checklist <span class="dim">&mdash;</span> <span class="host">notion.so</span>/launch-checklist-8f2c1a</div>
+          </div>
+          <div class="fmt-card">
+            <div class="fmt-head"><span class="fmt-dot"></span>Markdown</div>
+            <div class="fmt-code"><span class="dim">- [</span>Copy All URLs<span class="dim">](</span><span class="host">https://github.com/rockz5555/CopyAllTabUrls</span><span class="dim">)</span></div>
+            <div class="fmt-code"><span class="dim">- [</span>Launch checklist<span class="dim">](</span><span class="host">https://notion.so/launch-checklist-8f2c1a</span><span class="dim">)</span></div>
+            <div class="fmt-code"><span class="dim">- [</span>Dark UI inspiration<span class="dim">](</span><span class="host">https://dribbble.com/shots</span><span class="dim">)</span></div>
+          </div>
+        </div>
+        <p class="notes-foot">Switch with &larr; &rarr; or click</p>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

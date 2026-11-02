@@ -23,7 +23,8 @@ This writes `dist/copy-all-urls-chrome-1.1.0.zip` and
 2. Create a new item and upload `dist/copy-all-urls-chrome-1.1.0.zip`.
 3. Paste the name, short description, and detailed description from this file.
 4. Category: **Productivity**. Language: **English**.
-5. Upload the 128×128 icon and at least one screenshot (1280×800 or 640×480).
+5. Upload the 128×128 icon and at least one screenshot (1280×800 or 640×480) from
+   [`screenshots/`](./screenshots/).
 6. Complete the Privacy tab using the single purpose, permission justifications, and data usage
    text below.
 7. Submit for review.
@@ -34,14 +35,17 @@ This writes `dist/copy-all-urls-chrome-1.1.0.zip` and
 2. Upload `dist/copy-all-urls-firefox-1.1.0.zip`.
 3. In **Compatibility**, enable **Firefox for Android** (the manifest declares `gecko_android`).
 4. Paste the name, summary, description, category, tags, license, and links from this file.
-5. Add at least one screenshot.
+5. Add at least one screenshot from [`screenshots/`](./screenshots/).
 6. Complete the data collection disclosure.
 7. Submit for review.
 
 > On Firefox for Android the popup opens as a full-screen overlay. The shared stylesheet adapts
 > with a `pointer: coarse` media query, but test on a phone before submitting.
 
-Both stores require screenshots; none are in this repository yet.
+Store artwork lives in [`screenshots/`](./screenshots/): four 1280×800 PNGs covering the hero view,
+feature callouts, copy formats, and multi-window collapse. They are generated from the real popup
+with mock tab data (no personal URLs) via `node screenshots/build.mjs`. See
+[`screenshots/README.md`](./screenshots/README.md) for a description of each image.
 
 ---
 
