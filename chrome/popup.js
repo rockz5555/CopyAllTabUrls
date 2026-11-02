@@ -7,6 +7,7 @@ const api =
 
 const FORMAT_KEY = "cau:format";
 const MAX_OPEN_TABS = 20;
+const AVATAR_URL = "https://github.com/rockz5555.png?size=96";
 
 const ICONS = {
   copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5.5 15H4.8A2.8 2.8 0 0 1 2 12.2V4.8A2.8 2.8 0 0 1 4.8 2h7.4A2.8 2.8 0 0 1 15 4.8v.7"/></svg>',
@@ -62,6 +63,14 @@ const el = {
 
 /* ------------------------------------------------------------- Helpers */
 
+function loadGithubAvatar() {
+  const img = document.querySelector(".support-avatar-img");
+  if (!img) return;
+  img.addEventListener("load", () => img.classList.add("is-loaded"), { once: true });
+  img.addEventListener("error", () => img.remove(), { once: true });
+  img.src = `${AVATAR_URL}&t=${Date.now()}`;
+}
+
 function loadFormat() {
   try {
     const saved = localStorage.getItem(FORMAT_KEY);
@@ -89,8 +98,8 @@ function hashHue(value) {
   for (let i = 0; i < value.length; i += 1) {
     hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
   }
-  /* Keep generated avatar hues inside the red → pink → ember band. */
-  return 330 + (hash % 70);
+  /* Keep generated avatar hues inside the ember → amber band. */
+  return 16 + (hash % 26);
 }
 
 function isHttpUrl(url) {
@@ -790,6 +799,17 @@ function bindEvents() {
     applySelectionToDom();
   });
 
+  el.list.addEventListener("pointermove", (event) => {
+    const target = event.target;
+    const item =
+      target instanceof Element ? target.closest(".tab-item") : null;
+    if (!item) return;
+
+    const rect = item.getBoundingClientRect();
+    item.style.setProperty("--mx", `${event.clientX - rect.left}px`);
+    item.style.setProperty("--my", `${event.clientY - rect.top}px`);
+  });
+
   el.copyBtn.addEventListener("click", handleCopy);
   el.pasteBtn.addEventListener("click", handlePasteOpen);
 
@@ -832,6 +852,7 @@ function bindEvents() {
 
 async function init() {
   bindEvents();
+  loadGithubAvatar();
   setFormat(state.format);
 
   try {

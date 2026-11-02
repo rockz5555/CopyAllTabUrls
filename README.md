@@ -18,7 +18,7 @@ URLs, titled links, or Markdown. Works on **Chrome** and **Firefox**.
 - 📥 **Paste & open** — paste a list of links (even Markdown) and reopen them as tabs
 - 🪟 **Multi-window aware** — tabs are grouped by window, with the active tab highlighted
 - 🗂️ **Collapsible windows** — fold a window's tabs to focus on the rest without losing your selection
-- 🎨 **Redline-glass UI** — crimson neon glow, frosted glass cards, CRT haze, and buttery micro-interactions
+- 🎨 **Graphite-sleeve UI** — ember-orange glow, frosted glass cards, cinematic grid and buttery micro-interactions
 - ⌨️ **Keyboard friendly** — `/` to search, `Enter` to copy, `Esc` to clear/close
 - 🧩 **Graceful favicons** — letter avatars when a site has no icon
 
@@ -75,25 +75,35 @@ URLs, titled links, or Markdown. Works on **Chrome** and **Firefox**.
 - `clipboardWrite` — copy URLs to your clipboard
 - `clipboardRead` — read links when you press **Paste & open**
 
-No data ever leaves your browser. There are no network requests, analytics, or remote code.
+Your tab URLs never leave your browser. There are no analytics, trackers, or remote code. The only
+external request is the optional GitHub avatar image in the support footer; if it can't load, the
+built-in "N" fallback remains.
 
 ---
 
 ## 🧑‍💻 Development
 
 The popup is shared between both builds. To keep them in sync, edit the files in `chrome/`, then
-copy `popup.html`, `styles.css`, `popup.js`, and `helper.js` into `firefox/`.
+copy `popup.html`, `styles.css`, `popup.js`, `helper.js`, and `fonts/` into `firefox/`.
 
 ---
 
-## 👤 Author
+## 💛 Support
 
 Built and maintained by **Nijoo** — [github.com/rockz5555](https://github.com/rockz5555).
+
+- ⭐ **Star the repo:** [rockz5555/CopyAllTabUrls](https://github.com/rockz5555/CopyAllTabUrls)
+- ☕ **Donate via PayPal:** [paypal.me/nizwer](https://www.paypal.me/nizwer)
+
+If this extension saves you a click, a star or a small tip goes a long way.
 
 ---
 
 ## 📄 License
 
 MIT — feel free to use, modify, and share.
+
+The bundled fonts are distributed under the SIL Open Font License 1.1; see
+[`chrome/fonts/OFL.txt`](./chrome/fonts/OFL.txt) for copyright notices and terms.
 
 ---
