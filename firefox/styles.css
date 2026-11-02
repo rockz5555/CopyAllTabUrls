@@ -1914,3 +1914,20 @@ button {
     animation: none !important;
   }
 }
+
+@media (pointer: coarse) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    min-height: 100vh;
+  }
+
+  body {
+    padding: 14px;
+  }
+
+  .tab-list {
+    max-height: none;
+  }
+}

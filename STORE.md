@@ -5,6 +5,46 @@ Version: 1.1.0
 
 ---
 
+## Build the upload packages
+
+```powershell
+npm install
+npm run package
+```
+
+This writes `dist/copy-all-urls-chrome-1.1.0.zip` and
+`dist/copy-all-urls-firefox-1.1.0.zip`, each with `manifest.json` at the archive root.
+
+## Submission checklist
+
+### Chrome Web Store
+
+1. Register at https://chrome.google.com/webstore/devconsole (one-time $5 fee).
+2. Create a new item and upload `dist/copy-all-urls-chrome-1.1.0.zip`.
+3. Paste the name, short description, and detailed description from this file.
+4. Category: **Productivity**. Language: **English**.
+5. Upload the 128×128 icon and at least one screenshot (1280×800 or 640×480).
+6. Complete the Privacy tab using the single purpose, permission justifications, and data usage
+   text below.
+7. Submit for review.
+
+### Firefox Add-ons (AMO)
+
+1. Open https://addons.mozilla.org/developers/addon/submit/ and choose **On this site**.
+2. Upload `dist/copy-all-urls-firefox-1.1.0.zip`.
+3. In **Compatibility**, enable **Firefox for Android** (the manifest declares `gecko_android`).
+4. Paste the name, summary, description, category, tags, license, and links from this file.
+5. Add at least one screenshot.
+6. Complete the data collection disclosure.
+7. Submit for review.
+
+> On Firefox for Android the popup opens as a full-screen overlay. The shared stylesheet adapts
+> with a `pointer: coarse` media query, but test on a phone before submitting.
+
+Both stores require screenshots; none are in this repository yet.
+
+---
+
 ## Name
 
 ```

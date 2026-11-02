@@ -3,7 +3,7 @@
 <p align="center"><img src="./icon.png?raw=true" alt="Logo" width="256" /></p>
 
 A polished browser extension that puts every open tab on your clipboard in one click — as plain
-URLs, titled links, or Markdown. Works on **Chrome** and **Firefox**.
+URLs, titled links, or Markdown. Works on **Chrome**, **Firefox**, and **Firefox for Android**.
 
 ---
 
