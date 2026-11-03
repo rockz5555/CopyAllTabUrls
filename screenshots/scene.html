@@ -40,10 +40,10 @@
                 }
               : null,
             windowHeads: doc
-              ? [...doc.querySelectorAll(".window-head")].map((head) => {
+              ? [...doc.querySelectorAll(".group-head")].map((head) => {
                   const box = head.getBoundingClientRect();
                   return {
-                    window: head.dataset.windowId,
+                    window: head.dataset.groupKey,
                     top: Math.round(box.top),
                     bottom: Math.round(box.bottom),
                   };

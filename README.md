@@ -12,14 +12,17 @@ URLs, titled links, or Markdown. Works on **Chrome**, **Firefox**, and **Firefox
 - ⚡ **One-click copy** — grab every selected tab URL instantly
 - 🎯 **Pick exactly what you copy** — checkboxes, select all / clear, and a live counter
 - 🪟 **Per-window controls** — select all or clear tabs in each window independently
+- 🗂️ **Group by domain** — switch between window groups, clean domain groups, or one flat list
+- ⚙️ **View options** — sort A→Z, hide duplicate URLs, add group headings to copied text, compact rows, and favicon visibility
 - 🔍 **Instant search** — filter by page title or URL as you type
 - 🧾 **Three copy formats** — plain URLs, `Title — URL`, or Markdown links
 - 📋 **Copy a single URL** — hover any tab and hit its copy button
 - 📥 **Paste & open** — paste a list of links (even Markdown) and reopen them as tabs
-- 🪟 **Multi-window aware** — tabs are grouped by window, with the active tab highlighted
-- 🗂️ **Collapsible windows** — fold a window's tabs to focus on the rest without losing your selection
+- 🪟 **Multi-window aware** — tabs are grouped by window or domain, with the active tab highlighted
+- 🗂️ **Collapsible sections** — fold a window or domain to focus on the rest without losing your selection
 - 🎨 **Graphite-sleeve UI** — ember-orange glow, frosted glass cards, cinematic grid and buttery micro-interactions
-- ⌨️ **Keyboard friendly** — `/` to search, `Enter` to copy, `Esc` to clear/close
+- 📡 **Radar scan loader** — a cinematic tab sweep while the list is being assembled
+- ⌨️ **Keyboard friendly** — `/` to search, `Enter` to copy, `G` to cycle grouping, `,` for options
 - 🧩 **Graceful favicons** — letter avatars when a site has no icon
 
 ---
@@ -55,6 +58,10 @@ URLs, titled links, or Markdown. Works on **Chrome**, **Firefox**, and **Firefox
 3. Pick a format — **URLs**, **Title + URL**, or **Markdown**
 4. Hit **Copy** and paste anywhere
 
+Open the gear button for view options: group by **Window**, **Domain**, or **None**; sort tabs A→Z;
+hide duplicate URLs; include section headings in the copied text; use compact rows; or hide favicons.
+Everything is remembered locally.
+
 **Paste & open:** copy a list of links from anywhere, open the popup, and press
 **Paste & open** to launch them as background tabs (up to 20 at a time).
 
@@ -66,6 +73,8 @@ URLs, titled links, or Markdown. Works on **Chrome**, **Firefox**, and **Firefox
 | `Enter`   | Copy the selected tabs        |
 | `Esc`     | Clear search, then close      |
 | `←` `→`   | Switch copy format            |
+| `G`       | Cycle grouping mode           |
+| `,`       | Open view options             |
 
 ---
 

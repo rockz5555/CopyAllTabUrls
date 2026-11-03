@@ -91,7 +91,7 @@
 
         if (scenario === "multi") {
           setTimeout(() => {
-            const head = document.querySelector('.window-head[data-window-id="2"]');
+            const head = document.querySelector('.group-head[data-group-key="window:2"]');
             if (head) head.click();
             setTimeout(reportSize, 300);
             setTimeout(reportSize, 700);

@@ -1,7 +1,7 @@
 # Store listing copy
 
 Ready-to-paste text for the Chrome Web Store and Firefox Add-ons (AMO) listings.
-Version: 1.1.0
+Version: 1.2.0
 
 ---
 
@@ -12,15 +12,15 @@ npm install
 npm run package
 ```
 
-This writes `dist/copy-all-urls-chrome-1.1.0.zip` and
-`dist/copy-all-urls-firefox-1.1.0.zip`, each with `manifest.json` at the archive root.
+This writes `dist/copy-all-urls-chrome-1.2.0.zip` and
+`dist/copy-all-urls-firefox-1.2.0.zip`, each with `manifest.json` at the archive root.
 
 ## Submission checklist
 
 ### Chrome Web Store
 
 1. Register at https://chrome.google.com/webstore/devconsole (one-time $5 fee).
-2. Create a new item and upload `dist/copy-all-urls-chrome-1.1.0.zip`.
+2. Create a new item and upload `dist/copy-all-urls-chrome-1.2.0.zip`.
 3. Paste the name, short description, and detailed description from this file.
 4. Category: **Productivity**. Language: **English**.
 5. Upload the 128×128 icon and at least one screenshot (1280×800 or 640×480) from
@@ -32,7 +32,7 @@ This writes `dist/copy-all-urls-chrome-1.1.0.zip` and
 ### Firefox Add-ons (AMO)
 
 1. Open https://addons.mozilla.org/developers/addon/submit/ and choose **On this site**.
-2. Upload `dist/copy-all-urls-firefox-1.1.0.zip`.
+2. Upload `dist/copy-all-urls-firefox-1.2.0.zip`.
 3. In **Compatibility**, enable **Firefox for Android** (the manifest declares `gecko_android`).
 4. Paste the name, summary, description, category, tags, license, and links from this file.
 5. Add at least one screenshot from [`screenshots/`](./screenshots/).
@@ -72,28 +72,39 @@ Copy every open tab as plain URLs, titles, or Markdown links, then paste the lis
 ```
 Copy All URLs turns a window full of tabs into a clean list you can paste anywhere.
 
-Open the popup and every tab is there, grouped by window and ready to copy. Uncheck the ones you don't need, or use Select all / Clear. Search by page title or URL to narrow the list as you type. The counter always shows exactly how many links will land on your clipboard.
+Open the popup and every tab is there, grouped by window and ready to copy. Prefer domains? One tap regroups the list by site, with collapsible sections and per-group select all. Uncheck the ones you don't need, or use Select all / Clear. Search by page title or URL to narrow the list as you type. The counter always shows exactly how many links will land on your clipboard.
 
 Three copy formats
 - URLs: one plain link per line
 - Title + URL: "Page title — https://example.com/page"
 - Markdown: ready-to-paste "- [Page title](https://example.com/page)" links
 
+View options
+- Group by window, domain, or show one flat list
+- Sort tabs A→Z or Z→A inside each group
+- Hide duplicate URLs
+- Add group headings to the copied text
+- Switch to compact rows or hide favicons
+Your choices are saved locally.
+
 Paste & open
 Copied a list of links from a chat, an email, or a document? Open the popup and press Paste & open. It finds the http(s) links in your clipboard, removes duplicates, and opens them as background tabs, up to 20 at a time. Markdown lists work too.
 
 Built for real tab habits
-- Tabs are grouped by window, with the active tab marked
-- Collapse a window's tabs to focus on the rest, without losing the selection
-- Select or clear a whole window without touching the others
+- Tabs are grouped by window or domain, with the active tab marked
+- Collapse a window or domain section to focus on the rest, without losing the selection
+- Select or clear a whole window or domain without touching the others
 - Copy a single URL from any tab without changing your selection
 - Jump straight to any tab, even in another window
 - Letter avatars stand in when a site has no favicon
+- A radar-scan loader keeps the popup alive while tabs are indexed
 
 Keyboard
 - / focuses search
 - Enter copies the selected tabs
 - Left and right arrows switch format
+- G cycles window, domain, and flat grouping
+- , opens view options
 - Esc clears the search, then closes the popup
 
 Private by design
@@ -139,7 +150,7 @@ Required only when the user presses Paste & open, to read links from the clipboa
 - Does it use remote code? **No**
 - Does it use analytics, ads, or tracking? **No**
 
-Privacy policy URL: none required; the extension has no server component and stores only the chosen copy format in `localStorage`.
+Privacy policy URL: none required; the extension has no server component and stores only the chosen copy format and view options in `localStorage`.
 
 ## Developer details
 
@@ -159,11 +170,18 @@ Privacy policy URL: none required; the extension has no server component and sto
 - License: MIT
 
 Data collection disclosure: the add-on collects no data. All processing happens locally in the
-popup. The only stored value is the preferred copy format, kept in local storage.
+popup. The only stored values are the preferred copy format and view options, kept in local storage.
 
 ## What's new (release notes)
 
 ```
+1.2.0
+- Group tabs by domain, by window, or in one flat list
+- New view options panel: sort A→Z, hide duplicates, group headings, compact rows, favicons
+- Copy section headings with plain-text or Markdown output
+- Keyboard shortcuts: G cycles grouping, , opens view options
+- Collapsible domain sections with per-group select and clear
+
 1.1.0
 - New hand-drawn icon set for Chrome and Firefox
 - Frosted-glass action buttons with a clearer success state

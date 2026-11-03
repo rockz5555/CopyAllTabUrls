@@ -6,8 +6,65 @@ const api =
   globalThis.browser && globalThis.browser.tabs ? globalThis.browser : globalThis.chrome;
 
 const FORMAT_KEY = "cau:format";
+const SETTINGS_KEY = "cau:settings";
 const MAX_OPEN_TABS = 20;
+/* Keep the scan loader on screen long enough to read on instant tab queries. */
+const LOADER_MIN_MS = 420;
 const AVATAR_URL = "https://github.com/rockz5555.png?size=96";
+
+const DEFAULT_SETTINGS = {
+  groupBy: "window",
+  sort: "default",
+  hideDuplicates: false,
+  copyHeadings: false,
+  compact: false,
+  showFavicons: true,
+};
+
+const GROUP_MODES = ["window", "domain", "none"];
+const SORT_MODES = ["default", "az", "za"];
+
+const GROUP_MODE_LABELS = {
+  window: "window",
+  domain: "domain",
+  none: "tab order",
+};
+
+/* Common multi-label public suffixes so "news.bbc.co.uk" groups as bbc.co.uk
+   instead of the misleading co.uk. Hosting suffixes keep subdomains intact. */
+const MULTI_PART_SUFFIXES = new Set([
+  "ac.uk",
+  "co.in",
+  "co.jp",
+  "co.kr",
+  "co.nz",
+  "co.uk",
+  "co.za",
+  "com.ar",
+  "com.au",
+  "com.br",
+  "com.cn",
+  "com.hk",
+  "com.mx",
+  "com.pl",
+  "com.sg",
+  "com.tr",
+  "edu.au",
+  "gov.uk",
+  "net.au",
+  "ne.jp",
+  "org.au",
+  "org.uk",
+  "blogspot.com",
+  "firebaseapp.com",
+  "github.io",
+  "gitlab.io",
+  "herokuapp.com",
+  "netlify.app",
+  "pages.dev",
+  "vercel.app",
+  "web.app",
+]);
 
 const ICONS = {
   copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5.5 15H4.8A2.8 2.8 0 0 1 2 12.2V4.8A2.8 2.8 0 0 1 4.8 2h7.4A2.8 2.8 0 0 1 15 4.8v.7"/></svg>',
@@ -16,6 +73,8 @@ const ICONS = {
   go: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/></svg>',
   chevron:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+  window:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18"/></svg>',
 };
 
 const FORMATTERS = {
@@ -37,6 +96,7 @@ const state = {
   collapsed: new Set(),
   query: "",
   format: loadFormat(),
+  settings: loadSettings(),
   currentWindowId: undefined,
   firstRender: true,
 };
@@ -44,6 +104,7 @@ const state = {
 /* ---------------------------------------------------------------- DOM */
 
 const el = {
+  app: document.querySelector(".app"),
   list: document.getElementById("urlList"),
   tabCount: document.getElementById("tabCount"),
   searchInput: document.getElementById("searchInput"),
@@ -59,6 +120,11 @@ const el = {
   copyLabel: document.getElementById("copyLabel"),
   copyIcon: document.querySelector("#copyBtn .btn-icon"),
   pasteBtn: document.getElementById("pasteOpenBtn"),
+  settingsBtn: document.getElementById("settingsBtn"),
+  settingsPanel: document.getElementById("settingsPanel"),
+  settingsScrim: document.getElementById("settingsScrim"),
+  settingsClose: document.getElementById("settingsClose"),
+  settingsReset: document.getElementById("settingsReset"),
 };
 
 /* ------------------------------------------------------------- Helpers */
@@ -69,6 +135,20 @@ function loadGithubAvatar() {
   img.addEventListener("load", () => img.classList.add("is-loaded"), { once: true });
   img.addEventListener("error", () => img.remove(), { once: true });
   img.src = `${AVATAR_URL}&t=${Date.now()}`;
+}
+
+/* Popups are created hidden and only become visible once the browser shows
+   the window. Wait for that moment so the loader is actually on screen. */
+function waitForPopupVisible() {
+  if (document.visibilityState === "visible") return Promise.resolve();
+  return new Promise((resolve) => {
+    const onChange = () => {
+      if (document.visibilityState !== "visible") return;
+      document.removeEventListener("visibilitychange", onChange);
+      resolve();
+    };
+    document.addEventListener("visibilitychange", onChange);
+  });
 }
 
 function loadFormat() {
@@ -87,6 +167,44 @@ function saveFormat(format) {
   } catch {
     /* ignore */
   }
+}
+
+function loadSettings() {
+  const fallback = { ...DEFAULT_SETTINGS };
+
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return fallback;
+
+    const saved = JSON.parse(raw);
+    if (!saved || typeof saved !== "object") return fallback;
+
+    return {
+      groupBy: GROUP_MODES.includes(saved.groupBy) ? saved.groupBy : fallback.groupBy,
+      sort: SORT_MODES.includes(saved.sort) ? saved.sort : fallback.sort,
+      hideDuplicates: Boolean(saved.hideDuplicates),
+      copyHeadings: Boolean(saved.copyHeadings),
+      compact: Boolean(saved.compact),
+      showFavicons:
+        saved.showFavicons === undefined ? fallback.showFavicons : Boolean(saved.showFavicons),
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+  } catch {
+    /* ignore */
+  }
+}
+
+function isDefaultSettings() {
+  return Object.keys(DEFAULT_SETTINGS).every(
+    (key) => state.settings[key] === DEFAULT_SETTINGS[key]
+  );
 }
 
 function escapeMarkdown(text) {
@@ -127,6 +245,36 @@ function hostOf(url) {
   } catch {
     return "";
   }
+}
+
+function baseDomain(url) {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+
+    if (!host) {
+      const protocol = parsed.protocol.replace(":", "");
+      return protocol === "file" ? "Local files" : `${protocol} pages`;
+    }
+
+    if (host.includes(":") || /^\d+(\.\d+){3}$/.test(host)) return host;
+
+    const parts = host.split(".");
+    if (parts.length <= 2) return host;
+
+    const lastTwo = parts.slice(-2).join(".");
+    if (MULTI_PART_SUFFIXES.has(lastTwo)) return parts.slice(-3).join(".");
+
+    return lastTwo;
+  } catch {
+    return "Other";
+  }
+}
+
+function groupKeyFor(tab) {
+  if (state.settings.groupBy === "domain") return `domain:${baseDomain(tab.url)}`;
+  if (state.settings.groupBy === "window") return `window:${tab.windowId}`;
+  return "all";
 }
 
 function initialFor(tab) {
@@ -297,20 +445,103 @@ function extractUrls(text) {
 
 function getVisibleTabs() {
   const query = state.query.trim().toLowerCase();
-  if (!query) return state.tabs;
+  let tabs = state.tabs;
 
-  return state.tabs.filter(
-    (tab) =>
-      tab.title.toLowerCase().includes(query) ||
-      tab.url.toLowerCase().includes(query)
-  );
+  if (query) {
+    tabs = tabs.filter(
+      (tab) =>
+        tab.title.toLowerCase().includes(query) ||
+        tab.url.toLowerCase().includes(query)
+    );
+  }
+
+  if (state.settings.hideDuplicates) {
+    const seen = new Set();
+    tabs = tabs.filter((tab) => {
+      const key = tab.url;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  return tabs;
 }
 
-function render() {
+function compareTabs(a, b) {
+  const byTitle = a.title.localeCompare(b.title, undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+  if (byTitle !== 0) return byTitle;
+  return a.url.localeCompare(b.url, undefined, { numeric: true, sensitivity: "base" });
+}
+
+function sortTabs(tabs) {
+  const mode = state.settings.sort;
+  if (mode === "default") return tabs;
+
+  const sorted = [...tabs].sort(compareTabs);
+  return mode === "za" ? sorted.reverse() : sorted;
+}
+
+function getWindowNumbers() {
+  const numbers = new Map();
+  [...new Set(state.tabs.map((tab) => tab.windowId))].forEach((windowId, index) => {
+    numbers.set(String(windowId), index + 1);
+  });
+  return numbers;
+}
+
+/* Turn a flat list into the sections the current settings ask for. */
+function buildGroups(tabs) {
+  const mode = state.settings.groupBy;
+
+  if (mode === "none") {
+    return [{ key: "all", kind: "none", label: "", tabs: sortTabs(tabs) }];
+  }
+
+  const map = new Map();
+  sortTabs(tabs).forEach((tab) => {
+    const key =
+      mode === "domain" ? `domain:${baseDomain(tab.url)}` : `window:${tab.windowId}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(tab);
+  });
+
+  const windowNumbers = getWindowNumbers();
+  const groups = [...map.entries()].map(([key, groupTabs]) => ({
+    key,
+    kind: mode,
+    label:
+      mode === "domain"
+        ? baseDomain(groupTabs[0].url)
+        : `Window ${windowNumbers.get(String(groupTabs[0].windowId)) || 1}`,
+    tabs: groupTabs,
+  }));
+
+  if (mode === "domain") {
+    groups.sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: "base" })
+    );
+  } else {
+    groups.sort(
+      (a, b) => Number(a.tabs[0].windowId) - Number(b.tabs[0].windowId)
+    );
+  }
+
+  return groups;
+}
+
+function render(options = {}) {
   const visible = getVisibleTabs();
-  const animate = state.firstRender;
+  const animate = options.animate !== undefined ? options.animate : state.firstRender;
+
+  el.list.classList.toggle("is-compact", Boolean(state.settings.compact));
+  el.list.classList.toggle("no-favicons", !state.settings.showFavicons);
 
   el.list.replaceChildren();
+  el.list.removeAttribute("aria-busy");
 
   if (visible.length === 0) {
     el.list.hidden = true;
@@ -324,21 +555,16 @@ function render() {
   el.list.hidden = false;
   el.emptyState.hidden = true;
 
-  const groups = new Map();
-  visible.forEach((tab) => {
-    if (!groups.has(tab.windowId)) groups.set(tab.windowId, []);
-    groups.get(tab.windowId).push(tab);
-  });
-
-  const multipleWindows = groups.size > 1;
+  const groups = buildGroups(visible);
+  /* A lone window needs no header; domain groups are always worth showing. */
+  const showGroups =
+    state.settings.groupBy === "domain" ||
+    (state.settings.groupBy === "window" && groups.length > 1);
   let index = 0;
 
-  groups.forEach((tabs, windowId) => {
-    if (multipleWindows) {
-      const windowNumber = [...groups.keys()].indexOf(windowId) + 1;
-      el.list.appendChild(createWindowSeparator(windowId, tabs, windowNumber));
-    }
-    tabs.forEach((tab) => {
+  groups.forEach((group) => {
+    if (showGroups) el.list.appendChild(createGroupSeparator(group));
+    group.tabs.forEach((tab) => {
       el.list.appendChild(createTabItem(tab, index, animate));
       index += 1;
     });
@@ -349,43 +575,76 @@ function render() {
   state.firstRender = false;
 }
 
-function createWindowSeparator(windowId, tabs, windowNumber) {
+function createGroupSeparator(group) {
   const item = document.createElement("li");
-  item.className = "window-sep";
-  item.dataset.windowId = String(windowId);
+  item.className = `group-sep group-sep--${group.kind}`;
+  item.dataset.groupKey = group.key;
 
   const head = document.createElement("button");
   head.type = "button";
-  head.className = "window-head";
-  head.dataset.windowId = String(windowId);
+  head.className = "group-head";
+  head.dataset.groupKey = group.key;
+  head.dataset.groupLabel = group.label;
   head.setAttribute("aria-expanded", "true");
-  head.setAttribute("aria-label", `Collapse window ${windowNumber}`);
+  head.setAttribute("aria-label", `Collapse ${group.label}`);
 
   const chevron = document.createElement("span");
-  chevron.className = "window-chevron";
+  chevron.className = "group-chevron";
   chevron.setAttribute("aria-hidden", "true");
   chevron.innerHTML = ICONS.chevron;
 
-  const name = document.createElement("span");
-  name.className = "window-name";
-  name.textContent = `Window ${windowNumber}`;
+  head.append(chevron);
 
-  head.append(chevron, name);
+  if (group.kind === "domain") {
+    const badge = document.createElement("span");
+    badge.className = "group-favicon";
+    badge.style.setProperty("--hue", String(hashHue(group.label)));
+
+    const image = document.createElement("img");
+    image.alt = "";
+    image.loading = "lazy";
+    image.referrerPolicy = "no-referrer";
+
+    const letter = document.createElement("span");
+    letter.className = "group-letter";
+    letter.textContent = (group.label.trim().charAt(0) || "?").toUpperCase();
+
+    if (group.tabs[0]?.favIconUrl) {
+      image.src = group.tabs[0].favIconUrl;
+      image.addEventListener("error", () => badge.classList.add("is-fallback"));
+    } else {
+      badge.classList.add("is-fallback");
+    }
+
+    badge.append(image, letter);
+    head.append(badge);
+  } else {
+    const icon = document.createElement("span");
+    icon.className = "group-icon";
+    icon.innerHTML = ICONS.window;
+    icon.setAttribute("aria-hidden", "true");
+    head.append(icon);
+  }
+
+  const name = document.createElement("span");
+  name.className = "group-name";
+  name.textContent = group.label;
+  head.append(name);
 
   const actions = document.createElement("span");
-  actions.className = "window-actions";
+  actions.className = "group-actions";
 
   const count = document.createElement("span");
-  count.className = "window-count";
-  count.textContent = `${tabs.length} tab${tabs.length === 1 ? "" : "s"}`;
+  count.className = "group-count";
+  count.textContent = `${group.tabs.length} tab${group.tabs.length === 1 ? "" : "s"}`;
 
   const toggle = document.createElement("button");
   toggle.type = "button";
-  toggle.className = "text-btn window-toggle";
-  toggle.dataset.windowId = String(windowId);
-  toggle.dataset.windowLabel = `window ${windowNumber}`;
+  toggle.className = "text-btn group-toggle";
+  toggle.dataset.groupKey = group.key;
+  toggle.dataset.groupLabel = group.label;
   toggle.textContent = "Select all";
-  toggle.setAttribute("aria-label", `Select all tabs in window ${windowNumber}`);
+  toggle.setAttribute("aria-label", `Select all tabs in ${group.label}`);
 
   actions.append(count, toggle);
   item.append(head, actions);
@@ -397,6 +656,7 @@ function createTabItem(tab, index, animate) {
   item.className = "tab-item";
   item.dataset.tabId = tab.id;
   item.dataset.windowId = String(tab.windowId);
+  item.dataset.groupKey = groupKeyFor(tab);
   item.style.setProperty("--hue", String(hashHue(tab.url || tab.title)));
 
   if (animate) {
@@ -548,24 +808,36 @@ function syncCounts() {
   } else if (state.query.trim()) {
     el.listMeta.textContent = `${visible.length} of ${state.tabs.length} tabs`;
   } else {
-    const sites = new Set(visible.map((tab) => hostOf(tab.url)).filter(Boolean));
-    el.listMeta.textContent = `${visible.length} tab${visible.length === 1 ? "" : "s"} · ${
-      sites.size
-    } site${sites.size === 1 ? "" : "s"}`;
+    const groups = buildGroups(visible);
+    const sites = new Set(visible.map((tab) => baseDomain(tab.url)).filter(Boolean));
+    const tabWord = `${visible.length} tab${visible.length === 1 ? "" : "s"}`;
+
+    if (state.settings.groupBy === "domain") {
+      el.listMeta.textContent = `${tabWord} · ${groups.length} domain${
+        groups.length === 1 ? "" : "s"
+      }`;
+    } else if (state.settings.groupBy === "window") {
+      el.listMeta.textContent = `${tabWord} · ${groups.length} window${
+        groups.length === 1 ? "" : "s"
+      } · ${sites.size} site${sites.size === 1 ? "" : "s"}`;
+    } else {
+      el.listMeta.textContent = `${tabWord} · ${sites.size} site${
+        sites.size === 1 ? "" : "s"
+      }`;
+    }
   }
 
-  updateWindowToggles();
+  updateGroupToggles();
 }
 
-function updateWindowToggles() {
-  const visible = getVisibleTabs();
+function updateGroupToggles() {
+  const groups = new Map(buildGroups(getVisibleTabs()).map((group) => [group.key, group.tabs]));
 
-  el.list.querySelectorAll(".window-toggle").forEach((button) => {
-    const windowId = button.dataset.windowId;
-    const tabs = visible.filter((tab) => String(tab.windowId) === windowId);
+  el.list.querySelectorAll(".group-toggle").forEach((button) => {
+    const tabs = groups.get(button.dataset.groupKey) || [];
     const allSelected =
       tabs.length > 0 && tabs.every((tab) => state.selected.has(tab.id));
-    const label = button.dataset.windowLabel || "this window";
+    const label = button.dataset.groupLabel || "this group";
 
     button.textContent = allSelected ? "Clear" : "Select all";
     button.setAttribute(
@@ -575,38 +847,37 @@ function updateWindowToggles() {
   });
 }
 
-function isWindowCollapsed(windowId) {
-  return !state.query.trim() && state.collapsed.has(String(windowId));
+function isGroupCollapsed(key) {
+  return !state.query.trim() && state.collapsed.has(key);
 }
 
 /* Collapse is a view concern: hidden tabs stay selected and still copy. */
 function applyCollapseToDom() {
   const searching = Boolean(state.query.trim());
+  const collapsedKeys = new Set();
 
-  el.list.querySelectorAll(".window-sep").forEach((separator) => {
-    const windowId = separator.dataset.windowId;
-    const collapsed = isWindowCollapsed(windowId);
-    const head = separator.querySelector(".window-head");
-    const name = separator.querySelector(".window-name")?.textContent || "window";
+  el.list.querySelectorAll(".group-sep").forEach((separator) => {
+    const key = separator.dataset.groupKey;
+    const collapsed = isGroupCollapsed(key);
+    const head = separator.querySelector(".group-head");
+    const name = separator.querySelector(".group-name")?.textContent || "group";
 
     separator.classList.toggle("is-collapsed", collapsed);
+    if (collapsed) collapsedKeys.add(key);
 
     if (head) {
       head.disabled = searching;
       head.setAttribute("aria-expanded", String(!collapsed));
       head.setAttribute("aria-label", `${collapsed ? "Expand" : "Collapse"} ${name}`);
     }
+  });
 
-    el.list
-      .querySelectorAll(`.tab-item[data-window-id="${windowId}"]`)
-      .forEach((tabItem) => {
-        tabItem.hidden = collapsed;
-      });
+  el.list.querySelectorAll(".tab-item").forEach((tabItem) => {
+    tabItem.hidden = collapsedKeys.has(tabItem.dataset.groupKey);
   });
 }
 
-function toggleWindowSection(windowId) {
-  const key = String(windowId);
+function toggleGroupSection(key) {
   if (state.collapsed.has(key)) state.collapsed.delete(key);
   else state.collapsed.add(key);
   applyCollapseToDom();
@@ -644,15 +915,143 @@ function setFormat(format) {
   el.formatSwitch.style.setProperty("--i", String(Math.max(0, activeIndex)));
 }
 
+/* -------------------------------------------------------------- Settings */
+
+let settingsHideTimer = 0;
+
+function syncSettingsUI() {
+  el.settingsPanel.querySelectorAll(".seg").forEach((seg) => {
+    const key = seg.dataset.setting;
+    const buttons = [...seg.querySelectorAll("button[data-value]")];
+    const current = String(state.settings[key]);
+    const activeIndex = buttons.findIndex((button) => button.dataset.value === current);
+
+    seg.style.setProperty("--i", String(Math.max(0, activeIndex)));
+    seg.style.setProperty("--count", String(buttons.length));
+
+    buttons.forEach((button) => {
+      const active = button.dataset.value === current;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-checked", String(active));
+    });
+  });
+
+  el.settingsPanel.querySelectorAll("input[data-toggle]").forEach((input) => {
+    input.checked = Boolean(state.settings[input.dataset.toggle]);
+  });
+
+  el.settingsBtn.classList.toggle("has-custom", !isDefaultSettings());
+}
+
+function isSettingsOpen() {
+  return !el.settingsPanel.hidden && el.settingsPanel.classList.contains("is-open");
+}
+
+function setSettingsOpen(open) {
+  window.clearTimeout(settingsHideTimer);
+
+  if (open) {
+    syncSettingsUI();
+    el.settingsScrim.hidden = false;
+    el.settingsPanel.hidden = false;
+    document.body.classList.add("settings-open");
+    el.app.inert = true;
+
+    requestAnimationFrame(() => {
+      el.settingsPanel.classList.add("is-open");
+      el.settingsScrim.classList.add("is-open");
+    });
+
+    el.settingsBtn.setAttribute("aria-expanded", "true");
+    el.settingsBtn.classList.add("is-open");
+    window.setTimeout(() => el.settingsClose.focus(), 40);
+    return;
+  }
+
+  el.settingsPanel.classList.remove("is-open");
+  el.settingsScrim.classList.remove("is-open");
+  el.settingsBtn.setAttribute("aria-expanded", "false");
+  el.settingsBtn.classList.remove("is-open");
+  document.body.classList.remove("settings-open");
+  el.app.inert = false;
+
+  settingsHideTimer = window.setTimeout(() => {
+    if (el.settingsPanel.classList.contains("is-open")) return;
+    el.settingsPanel.hidden = true;
+    el.settingsScrim.hidden = true;
+  }, 230);
+}
+
+function closeSettings(options = {}) {
+  setSettingsOpen(false);
+  if (options.restoreFocus !== false) el.settingsBtn.focus();
+}
+
+function updateSetting(key, value) {
+  if (!(key in DEFAULT_SETTINGS) || state.settings[key] === value) return;
+
+  state.settings[key] = value;
+  saveSettings();
+  syncSettingsUI();
+  render({ animate: true });
+}
+
+function resetSettings() {
+  state.settings = { ...DEFAULT_SETTINGS };
+  state.collapsed.clear();
+  saveSettings();
+  syncSettingsUI();
+  render({ animate: true });
+  showToast("Settings reset to defaults", { type: "info", duration: 2200 });
+}
+
+function cycleGrouping() {
+  const nextIndex = (GROUP_MODES.indexOf(state.settings.groupBy) + 1) % GROUP_MODES.length;
+  const next = GROUP_MODES[nextIndex];
+
+  updateSetting("groupBy", next);
+  showToast(next === "none" ? "Grouping off" : `Grouped by ${GROUP_MODE_LABELS[next]}`, {
+    type: "info",
+    duration: 1800,
+  });
+}
+
+/* --------------------------------------------------------------- Copying */
+
+/* Groups decide both on-screen and clipboard order, so the text matches the list. */
+function getSelectedTabs() {
+  return buildGroups(getVisibleTabs())
+    .flatMap((group) => group.tabs)
+    .filter((tab) => state.selected.has(tab.id));
+}
+
+function buildCopyText(tabs) {
+  const groups = buildGroups(tabs);
+
+  if (!state.settings.copyHeadings || state.settings.groupBy === "none") {
+    return FORMATTERS[state.format](groups.flatMap((group) => group.tabs));
+  }
+
+  return groups
+    .map((group) => {
+      const heading =
+        state.format === "markdown"
+          ? `## ${escapeMarkdown(group.label)}`
+          : `# ${group.label}`;
+      return `${heading}\n${FORMATTERS[state.format](group.tabs)}`;
+    })
+    .join("\n\n");
+}
+
 async function handleCopy() {
-  const selected = getVisibleTabs().filter((tab) => state.selected.has(tab.id));
+  const selected = getSelectedTabs();
 
   if (selected.length === 0) {
     showToast("Select at least one tab first", { type: "info" });
     return;
   }
 
-  const text = FORMATTERS[state.format](selected);
+  const text = buildCopyText(selected);
   const ok = await copyText(text);
 
   if (!ok) {
@@ -775,19 +1174,18 @@ function bindEvents() {
   });
 
   el.list.addEventListener("click", (event) => {
-    const head = event.target.closest(".window-head");
+    const head = event.target.closest(".group-head");
     if (head) {
-      if (!state.query.trim()) toggleWindowSection(head.dataset.windowId);
+      if (!state.query.trim()) toggleGroupSection(head.dataset.groupKey);
       return;
     }
 
-    const toggle = event.target.closest(".window-toggle");
+    const toggle = event.target.closest(".group-toggle");
     if (!toggle) return;
 
-    const windowId = toggle.dataset.windowId;
-    const tabs = getVisibleTabs().filter(
-      (tab) => String(tab.windowId) === windowId
-    );
+    const groupKey = toggle.dataset.groupKey;
+    const group = buildGroups(getVisibleTabs()).find((entry) => entry.key === groupKey);
+    const tabs = group ? group.tabs : [];
     if (tabs.length === 0) return;
 
     const allSelected = tabs.every((tab) => state.selected.has(tab.id));
@@ -813,11 +1211,77 @@ function bindEvents() {
   el.copyBtn.addEventListener("click", handleCopy);
   el.pasteBtn.addEventListener("click", handlePasteOpen);
 
+  el.settingsBtn.addEventListener("click", () => setSettingsOpen(true));
+  el.settingsClose.addEventListener("click", () => closeSettings());
+  el.settingsScrim.addEventListener("click", () => closeSettings());
+  el.settingsReset.addEventListener("click", resetSettings);
+
+  el.settingsPanel.addEventListener("click", (event) => {
+    const option = event.target.closest(".seg button[data-value]");
+    if (!option) return;
+
+    const seg = option.closest(".seg");
+    updateSetting(seg.dataset.setting, option.dataset.value);
+  });
+
+  el.settingsPanel.addEventListener("change", (event) => {
+    const input = event.target.closest("input[data-toggle]");
+    if (input) updateSetting(input.dataset.toggle, input.checked);
+  });
+
+  el.settingsPanel.addEventListener("keydown", (event) => {
+    const seg = event.target.closest(".seg");
+    if (!seg) return;
+
+    const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
+    if (!keys.includes(event.key)) return;
+
+    const options = [...seg.querySelectorAll("button[data-value]")];
+    const current = options.findIndex((option) =>
+      option.classList.contains("is-active")
+    );
+
+    let next = current;
+    if (event.key === "ArrowLeft") next = (current - 1 + options.length) % options.length;
+    if (event.key === "ArrowRight") next = (current + 1) % options.length;
+    if (event.key === "Home") next = 0;
+    if (event.key === "End") next = options.length - 1;
+
+    event.preventDefault();
+    options[next].focus();
+    updateSetting(seg.dataset.setting, options[next].dataset.value);
+  });
+
   document.addEventListener("keydown", (event) => {
     const target = event.target;
     const typing =
       target instanceof HTMLElement &&
       (target.matches("input, textarea, select") || target.isContentEditable);
+
+    if (isSettingsOpen()) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeSettings();
+      }
+      return;
+    }
+
+    if (!typing && !event.metaKey && !event.ctrlKey && event.key === ",") {
+      event.preventDefault();
+      setSettingsOpen(true);
+      return;
+    }
+
+    if (
+      !typing &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      (event.key === "g" || event.key === "G")
+    ) {
+      event.preventDefault();
+      cycleGrouping();
+      return;
+    }
 
     if (event.key === "/" && !typing && !event.metaKey && !event.ctrlKey) {
       event.preventDefault();
@@ -852,8 +1316,8 @@ function bindEvents() {
 
 async function init() {
   bindEvents();
-  loadGithubAvatar();
   setFormat(state.format);
+  syncSettingsUI();
 
   try {
     const [tabs, currentWindow] = await Promise.all([
@@ -869,10 +1333,19 @@ async function init() {
     state.selected = new Set(state.tabs.map((tab) => tab.id));
     el.tabCount.textContent = String(state.tabs.length);
 
+    /* Keep the loader up for a readable beat after the popup is on screen,
+       not just while it is hidden behind the browser window. */
+    await Promise.race([
+      waitForPopupVisible(),
+      new Promise((resolve) => window.setTimeout(resolve, 800)),
+    ]);
+    await new Promise((resolve) => window.setTimeout(resolve, LOADER_MIN_MS));
+
     render();
   } catch (error) {
     console.error("Copy All URLs: failed to read tabs", error);
     el.list.replaceChildren();
+    el.list.removeAttribute("aria-busy");
     el.list.hidden = true;
     el.emptyState.hidden = false;
     el.emptyTitle.textContent = "Could not read tabs";
@@ -883,6 +1356,10 @@ async function init() {
     el.copyLabel.textContent = "Select tabs to copy";
     el.selectAllBtn.disabled = true;
   }
+
+  /* Non-critical remote avatar: load it after the list is on screen so it
+     can never delay the popup's first paint. */
+  loadGithubAvatar();
 }
 
 init();
